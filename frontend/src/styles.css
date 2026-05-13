@@ -1,6 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root { height: 100%; }
-body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+:root {
+  --bg: 17 24 39;
+  --bg-soft: 24 34 54;
+  --surface: 10 15 24;
+  --surface-2: 15 23 42;
+  --text: 226 232 240;
+  --muted: 148 163 184;
+  --border: 51 65 85;
+  --primary: 59 130 246;
+  --success: 34 197 94;
+  --warning: 234 179 8;
+  --danger: 239 68 68;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html:not(.dark) {
+  color-scheme: light;
+  --bg: 245 247 251;
+  --bg-soft: 238 242 247;
+  --surface: 255 255 255;
+  --surface-2: 248 250 252;
+  --text: 15 23 42;
+  --muted: 71 85 105;
+  --border: 226 232 240;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Manrope', system-ui, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
+    radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 25%),
+    linear-gradient(180deg, rgb(var(--bg)) 0%, rgb(var(--bg-soft)) 100%);
+  color: rgb(var(--text));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.cc-card {
+  @apply rounded-3xl border shadow-2xl shadow-slate-950/20 backdrop-blur-xl;
+  border-color: rgb(var(--border) / 0.55);
+  background: linear-gradient(180deg, rgb(var(--surface) / 0.92), rgb(var(--surface-2) / 0.92));
+}
+
+.cc-card-ghost {
+  @apply rounded-3xl border;
+  border-color: rgb(var(--border) / 0.35);
+  background: rgb(var(--surface) / 0.62);
+}
+
+.cc-ring {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25), 0 16px 48px rgba(15, 23, 42, 0.18);
+}
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.58);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  backdrop-filter: blur(24px);
+}
+
+.light .glass-panel,
+html:not(.dark) .glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.sla-green { color: rgb(34, 197, 94); }
+.sla-yellow { color: rgb(234, 179, 8); }
+.sla-red { color: rgb(239, 68, 68); }
+
+.scrollbar-none::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.motion-safe * {
+  will-change: transform, opacity;
+}

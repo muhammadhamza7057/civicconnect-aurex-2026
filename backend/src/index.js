@@ -18,16 +18,37 @@ const app = express();
 // Security
 app.use(helmet());
 
-// CORS whitelist support
-const origins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean);
+// CORS configuration - explicitly allow frontend + credentials
+const FRONTEND_URLS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow server-to-server or curl
-    if (origins.length === 0 || origins.includes(origin) || origins.includes('*')) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  }
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like curl or server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in whitelist
+    if (FRONTEND_URLS.includes(origin) || process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    callback(new Error(`CORS blocked: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 };
+
+// Apply CORS to all routes (CRITICAL: must come BEFORE routes)
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight requests
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestLogger);
@@ -56,7 +77,12 @@ app.use('/api/v1', apiRouter);
 const PORT = Number(process.env.PORT || 5000);
 const MAX_PORT_RETRIES = Number(process.env.PORT_RETRY_LIMIT || 5);
 const server = createServer(app);
-const io = new Server(server, { cors: { origin: process.env.FRONTEND_URL || '*' } });
+const io = new Server(server, { 
+  cors: { 
+    origin: process.env.FRONTEND_URL || '*',
+    credentials: true
+  } 
+});
 
 io.on('connection', (socket) => {
   console.log('socket connected', socket.id);

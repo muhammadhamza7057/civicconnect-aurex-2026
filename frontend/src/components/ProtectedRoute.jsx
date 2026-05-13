@@ -1,10 +1,13 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from '../store/authStore';
+import { LoadingScreen } from './LoadingScreen';
 
-export default function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+export function ProtectedRoute({ children }) {
+  const status = useAuthStore(state => state.status);
+  const profile = useAuthStore(state => state.profile);
+
+  if (status === 'loading') return <LoadingScreen message="Loading secure workspace" />;
+  if (!profile) return <Navigate to="/login" replace />;
   return children;
 }

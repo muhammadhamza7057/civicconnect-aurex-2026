@@ -1,0 +1,43 @@
+import React from 'react';
+import { TrendingUp, Users, Clock, AlertCircle, CheckCircle2, BarChart3 } from 'lucide-react';
+import CountUp from 'react-countup';
+import { motion } from 'framer-motion';
+
+const iconMap = {
+  tickets: Clock,
+  users: Users,
+  performance: TrendingUp,
+  alerts: AlertCircle,
+  completed: CheckCircle2,
+  analytics: BarChart3
+};
+
+export function MetricCard({ label, value, icon = 'tickets', trend, accent = 'primary' }) {
+  const Icon = iconMap[icon] || iconMap.tickets;
+  const numeric = Number(value);
+  const isNumeric = Number.isFinite(numeric) && String(value).trim() !== '' && /^-?\d+(\.\d+)?$/.test(String(value));
+
+  const accentMap = {
+    primary: 'from-primary/20 to-primary/5 text-primary',
+    success: 'from-success/20 to-success/5 text-success',
+    warning: 'from-warning/20 to-warning/5 text-warning',
+    danger: 'from-danger/20 to-danger/5 text-danger'
+  };
+
+  return (
+    <motion.div whileHover={{ y: -4 }} className="cc-card p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm text-muted font-medium">{label}</p>
+          <div className="mt-3 text-4xl font-black tracking-tight text-text">
+            {isNumeric ? <CountUp end={numeric} duration={1.8} /> : value}
+          </div>
+          {trend && <p className="mt-2 text-xs text-success">{trend}</p>}
+        </div>
+        <div className={`rounded-2xl bg-gradient-to-br p-3 ${accentMap[accent] || accentMap.primary}`}>
+          <Icon size={24} strokeWidth={1.5} />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
