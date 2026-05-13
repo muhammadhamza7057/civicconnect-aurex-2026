@@ -1,117 +1,130 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import CountUp from 'react-countup';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  BarChart3, 
+  Map as MapIcon, 
+  Download, 
+  RefreshCw, 
+  LayoutDashboard,
+  Activity
+} from 'lucide-react';
 import { SectionHeader } from '../components/SectionHeader';
-import { StatCard } from '../components/StatCard';
-import { EmptyState } from '../components/EmptyState';
 import { AnimatedPage } from '../components/AnimatedPage';
+import { AnalyticsDashboard } from '../components/AnalyticsDashboard';
+import { LiveCityMap } from '../components/LiveCityMap';
+import { client as axiosInstance } from '../api/client';
 import { getTickets } from '../api/tickets';
-import { moneyFormat } from '../utils/format';
-
-function statusCount(tickets, status) {
-  return tickets.filter(ticket => ticket.status === status).length;
-}
+import { useAuthStore } from '../store/authStore';
 
 export function AdminDashboard() {
+  const [analyticsData, setAnalyticsData] = useState(null);
   const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('analytics'); // 'analytics' or 'map'
+  const profile = useAuthStore(state => state.profile);
 
-  const loadTickets = async () => {
-    const data = await getTickets({ per_page: 100 });
-    const list = Array.isArray(data) ? data : data?.data || [];
-    setTickets(list);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const endpoint = profile.role === 'super_admin' ? '/analytics/system' : '/analytics/department';
+      const [analyticsRes, ticketsRes] = await Promise.all([
+        axiosInstance.get(endpoint),
+        getTickets({ per_page: 50 })
+      ]);
+      
+      setAnalyticsData(analyticsRes.data.data);
+      setTickets(Array.isArray(ticketsRes) ? ticketsRes : ticketsRes?.data || []);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to load executive data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadTickets().catch(err => toast.error(err.message || 'Failed to load analytics'));
-  }, []);
-
-  const metrics = useMemo(() => ({
-    total: tickets.length,
-    open: tickets.filter(ticket => !['resolved', 'closed'].includes(ticket.status)).length,
-    critical: tickets.filter(ticket => ['critical', 'emergency'].includes(ticket.priority)).length,
-    resolved: statusCount(tickets, 'resolved') + statusCount(tickets, 'closed'),
-    avgSla: tickets.length ? Math.round(tickets.reduce((sum, ticket) => sum + (ticket.metadata?.slaStatus === 'red' ? 3 : ticket.metadata?.slaStatus === 'amber' ? 2 : 1), 0) / tickets.length) : 0
-  }), [tickets]);
-
-  const departmentBreakdown = useMemo(() => {
-    const counts = tickets.reduce((acc, ticket) => {
-      const key = ticket.department?.name || ticket.department?.slug || 'Unassigned';
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  }, [tickets]);
+    fetchData();
+  }, [profile.role]);
 
   return (
-    <AnimatedPage className="space-y-6">
+    <AnimatedPage className="space-y-8 pb-20">
       <SectionHeader
-        eyebrow="Executive analytics"
-        title="Admin command center"
-        description="Track system health, departmental throughput, SLA performance, and governance at a glance."
-        action={<div className="flex gap-3"><button className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold">Export CSV</button><button className="rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-glow">Export PDF</button></div>}
+        eyebrow="Executive Command Center"
+        title={profile.role === 'super_admin' ? 'City-Wide Operations' : 'Departmental Oversight'}
+        description="Monitor system-wide health, response times, and citizen satisfaction in real-time."
+        action={
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setViewMode(viewMode === 'analytics' ? 'map' : 'analytics')}
+              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-gray-300 hover:bg-white/10 transition-all"
+            >
+              {viewMode === 'analytics' ? <MapIcon size={18} /> : <LayoutDashboard size={18} />}
+              {viewMode === 'analytics' ? 'Live Map' : 'Analytics'}
+            </button>
+            <button 
+              onClick={fetchData}
+              className="p-3 rounded-2xl border border-white/10 bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+            </button>
+            <button className="hidden md:flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 font-black shadow-lg hover:bg-gray-100 transition-all">
+              <Download size={18} />
+              Export Reports
+            </button>
+          </div>
+        }
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total tickets" value={metrics.total} accent="primary" hint="Current system-wide volume" />
-        <StatCard label="Open tickets" value={metrics.open} accent="warning" hint="Still active in the workflow" />
-        <StatCard label="Critical" value={metrics.critical} accent="danger" hint="Emergency attention required" />
-        <StatCard label="Resolved" value={metrics.resolved} accent="success" hint="Closed and completed tickets" />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <section className="cc-card p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">SLA performance</p>
-              <p className="mt-2 text-3xl font-black text-text"><CountUp end={metrics.avgSla} duration={1.3} /> / 3</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted">Compliance</p>
-              <p className="mt-1 text-xl font-semibold text-text">{tickets.length ? `${Math.round((metrics.resolved / tickets.length) * 100)}%` : '0%'}</p>
-            </div>
-          </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {['green', 'amber', 'red'].map(color => {
-              const count = tickets.filter(ticket => ticket.metadata?.slaStatus === color).length;
-              return (
-                <div key={color} className="rounded-3xl border border-white/10 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">{color} zone</p>
-                  <p className="mt-2 text-2xl font-black text-text">{count}</p>
+      <AnimatePresence mode="wait">
+        {loading ? (
+          <motion.div 
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="h-[600px] flex flex-col items-center justify-center space-y-4"
+          >
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Aggregating Data...</p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key={viewMode}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          >
+            {viewMode === 'analytics' ? (
+              <AnalyticsDashboard 
+                data={analyticsData} 
+                type={profile.role === 'super_admin' ? 'system' : 'department'} 
+              />
+            ) : (
+              <div className="space-y-6">
+                <div className="cc-card p-4 flex items-center justify-between border-primary/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                      <Activity size={20} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-gray-500">Live Incident Map</p>
+                      <p className="text-sm font-bold text-white">Real-time status of all reported issues</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="text-right">
+                      <p className="text-[10px] font-black uppercase text-gray-600">Active Incidents</p>
+                      <p className="text-lg font-black text-white">{tickets.length}</p>
+                    </div>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="cc-card p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Department distribution</p>
-          <div className="mt-4 space-y-3">
-            {departmentBreakdown.length ? departmentBreakdown.map(([name, count]) => (
-              <div key={name}>
-                <div className="mb-1 flex justify-between text-sm">
-                  <span className="text-text">{name}</span>
-                  <span className="text-muted">{count}</span>
-                </div>
-                <div className="h-2 rounded-full bg-white/5">
-                  <div className="h-2 rounded-full bg-gradient-to-r from-primary to-success" style={{ width: `${Math.min(100, Math.max(8, count * 12))}%` }} />
-                </div>
+                <LiveCityMap tickets={tickets} zoom={12} />
               </div>
-            )) : <EmptyState title="No data yet" description="Department analytics will show once tickets are seeded or created." />}
-          </div>
-        </section>
-      </div>
-
-      <section className="cc-card p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Heatmap</p>
-        <div className="mt-4 grid grid-cols-8 gap-2 sm:grid-cols-12">
-          {Array.from({ length: 48 }).map((_, index) => {
-            const active = tickets.length ? tickets[index % tickets.length] : null;
-            const intensity = active ? (active.priority === 'emergency' ? 'bg-red-500/80' : active.priority === 'critical' ? 'bg-orange-500/70' : active.priority === 'high' ? 'bg-amber-500/60' : 'bg-primary/50') : 'bg-white/5';
-            return <div key={index} className={`aspect-square rounded-xl ${intensity}`} />;
-          })}
-        </div>
-      </section>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AnimatedPage>
   );
 }

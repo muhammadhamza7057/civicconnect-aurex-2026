@@ -1,31 +1,37 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Plus, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { Plus, TrendingUp, CheckCircle2, Map as MapIcon, List as ListIcon } from 'lucide-react';
 import { SectionHeader } from '../components/SectionHeader';
 import { MetricCard } from '../components/MetricCard';
 import { EnhancedTicketCard } from '../components/EnhancedTicketCard';
 import { EmptyState } from '../components/EmptyState';
 import { AnimatedPage } from '../components/AnimatedPage';
+import { LiveCityMap } from '../components/LiveCityMap';
 import { getMyTickets, getTicketById } from '../api/tickets';
 import { useAuthStore } from '../store/authStore';
-import { connectSocket, getSocket } from '../socket/client';
-import { motion } from 'framer-motion';
+import { connectSocket } from '../socket/client';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function EnhancedResidentDashboard() {
   const profile = useAuthStore(state => state.profile);
   const [tickets, setTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
   const loadTickets = async () => {
-    const data = await getMyTickets({ per_page: 100 });
-    const list = Array.isArray(data) ? data : data?.data || [];
-    setTickets(list);
-    if (!selectedTicket && list[0]) setSelectedTicket(list[0]);
+    try {
+      const data = await getMyTickets({ per_page: 100 });
+      const list = Array.isArray(data) ? data : data?.data || [];
+      setTickets(list);
+      if (!selectedTicket && list[0]) setSelectedTicket(list[0]);
+    } catch (err) {
+      toast.error(err.message || 'Failed to load tickets');
+    }
   };
 
   useEffect(() => {
-    loadTickets().catch(err => toast.error(err.message || 'Failed to load tickets'));
+    loadTickets();
   }, []);
 
   useEffect(() => {
@@ -43,7 +49,6 @@ export function EnhancedResidentDashboard() {
           if (exists) return prev.map(item => (item._id === ticket._id ? ticket : item));
           return [ticket, ...prev];
         });
-        setSelectedTicket(ticket);
       } catch (error) {
         loadTickets();
       }
@@ -51,16 +56,14 @@ export function EnhancedResidentDashboard() {
 
     socket.on('ticket:created', syncTicket);
     socket.on('ticket:updated', syncTicket);
-    socket.on('ticket:aiUpdated', syncTicket);
     socket.on('ticket:statusChanged', syncTicket);
 
     return () => {
       socket.off('ticket:created', syncTicket);
       socket.off('ticket:updated', syncTicket);
-      socket.off('ticket:aiUpdated', syncTicket);
       socket.off('ticket:statusChanged', syncTicket);
     };
-  }, [selectedTicket]);
+  }, []);
 
   const counts = useMemo(() => ({
     open: tickets.filter(t => !['resolved', 'closed'].includes(t.status)).length,
@@ -69,113 +72,182 @@ export function EnhancedResidentDashboard() {
   }), [tickets]);
 
   return (
-    <AnimatedPage className="space-y-8">
+    <AnimatedPage className="space-y-8 pb-12">
       <SectionHeader
         eyebrow={`Welcome back, ${profile?.full_name?.split(' ')[0] || 'Resident'}`}
-        title="Your civic requests"
-        description="Submit issues, track progress, and see your impact on city operations in real time."
+        title="Your Civic Dashboard"
+        description="Monitor your reported issues and track city-wide progress in real time."
         action={
-          <Link
-            to="/tickets/new"
-            className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-glow transition hover:opacity-95"
-          >
-            <Plus size={18} />
-            Report Issue
-          </Link>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
+              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-gray-300 hover:bg-white/10 transition-all"
+            >
+              {viewMode === 'list' ? <MapIcon size={18} /> : <ListIcon size={18} />}
+              {viewMode === 'list' ? 'Map View' : 'List View'}
+            </button>
+            <Link
+              to="/tickets/new"
+              className="flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 font-black text-white shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
+            >
+              <Plus size={18} />
+              Report Issue
+            </Link>
+          </div>
         }
       />
 
       {/* METRIC CARDS */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <MetricCard label="Open Requests" value={counts.open} icon="tickets" accent="primary" />
+        <MetricCard label="Active Requests" value={counts.open} icon="tickets" accent="primary" />
         <MetricCard label="Resolved" value={counts.resolved} icon="completed" accent="success" />
-        <MetricCard label="Urgent Issues" value={counts.urgent} icon="alerts" accent="danger" />
+        <MetricCard label="Urgent Alerts" value={counts.urgent} icon="alerts" accent="danger" />
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        {/* TICKETS LIST */}
-        <section className="space-y-4">
-          {tickets.length > 0 ? (
-            tickets.map((ticket, idx) => (
+      {/* MAIN CONTENT AREA */}
+      <div className="grid gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-8 space-y-6">
+          <AnimatePresence mode="wait">
+            {viewMode === 'map' ? (
               <motion.div
-                key={ticket._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                key="map"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.4 }}
               >
-                <EnhancedTicketCard ticket={ticket} onClick={() => setSelectedTicket(ticket)} />
+                <LiveCityMap tickets={tickets} />
               </motion.div>
-            ))
-          ) : (
-            <EmptyState
-              title="No requests yet"
-              description="Submit your first civic issue and watch real-time updates as it progresses through our system."
-              action={
-                <Link
-                  to="/tickets/new"
-                  className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-glow"
-                >
-                  <Plus size={18} />
-                  Report Issue
-                </Link>
-              }
-            />
-          )}
-        </section>
-
-        {/* SIDEBAR - SELECTED TICKET */}
-        <aside className="space-y-4">
-          {selectedTicket ? (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="cc-card space-y-5 p-6">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-primary">{selectedTicket.ticket_code}</p>
-                <h3 className="mt-3 text-xl font-bold text-text">{selectedTicket.title}</h3>
-              </div>
-
-              {/* STATUS & INFO */}
-              <div className="space-y-3 border-t border-white/10 pt-4">
-                <div>
-                  <p className="text-xs text-muted">Status</p>
-                  <p className="mt-1 font-semibold text-text">{selectedTicket.status.replace(/_/g, ' ')}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted">Priority</p>
-                  <p className="mt-1 font-semibold text-text">{selectedTicket.priority}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted">SLA Status</p>
-                  <p className={`mt-1 font-semibold ${selectedTicket.metadata?.slaStatus === 'red' ? 'text-red-400' : selectedTicket.metadata?.slaStatus === 'amber' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                    {selectedTicket.metadata?.slaStatus || 'on track'}
-                  </p>
-                </div>
-              </div>
-
-              {/* AI INSIGHT */}
-              {selectedTicket.ai_summary && (
-                <div className="rounded-2xl border border-primary/20 bg-primary/10 p-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary">AI Analysis</p>
-                  <p className="mt-3 text-sm leading-6 text-text">{selectedTicket.ai_summary}</p>
-                </div>
-              )}
-
-              {/* ACTION BUTTON */}
-              <Link
-                to={`/tickets/${selectedTicket._id}`}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary/10 py-3 font-semibold text-primary transition hover:bg-primary/20"
+            ) : (
+              <motion.div
+                key="list"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-4"
               >
-                <TrendingUp size={18} />
-                View Full Details
-              </Link>
-            </motion.div>
-          ) : (
-            <div className="cc-card p-6 text-center">
-              <CheckCircle2 size={40} className="mx-auto text-muted/30" strokeWidth={1} />
-              <p className="mt-4 text-sm text-muted">Select a request to view details</p>
-            </div>
-          )}
-        </aside>
+                {tickets.length > 0 ? (
+                  tickets.map((ticket, idx) => (
+                    <motion.div
+                      key={ticket._id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                    >
+                      <EnhancedTicketCard 
+                        ticket={ticket} 
+                        isSelected={selectedTicket?._id === ticket._id}
+                        onClick={() => setSelectedTicket(ticket)} 
+                      />
+                    </motion.div>
+                  ))
+                ) : (
+                  <EmptyState
+                    title="No active requests"
+                    description="Your voice matters. Report an issue to help improve our city today."
+                    action={
+                      <Link
+                        to="/tickets/new"
+                        className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-glow"
+                      >
+                        <Plus size={18} />
+                        Get Started
+                      </Link>
+                    }
+                  />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* SIDE PANEL: SELECTED TICKET PREVIEW */}
+        <div className="lg:col-span-4">
+          <AnimatePresence mode="wait">
+            {selectedTicket ? (
+              <motion.div 
+                key={selectedTicket._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="cc-card p-8 sticky top-24 border-primary/20"
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/10 px-3 py-1 rounded-full">
+                    {selectedTicket.ticket_code}
+                  </span>
+                  <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${
+                    selectedTicket.status === 'resolved' ? 'bg-success/10 text-success' : 'bg-white/5 text-gray-400'
+                  }`}>
+                    {selectedTicket.status}
+                  </span>
+                </div>
+                
+                <h3 className="text-2xl font-black text-white mb-4 leading-tight">{selectedTicket.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed mb-8 line-clamp-4">{selectedTicket.description}</p>
+
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Priority</p>
+                    <p className="font-bold text-white text-sm">{selectedTicket.priority}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">SLA</p>
+                    <p className={`font-bold text-sm ${
+                      selectedTicket.metadata?.slaStatus === 'red' ? 'text-red-500' : 'text-emerald-500'
+                    }`}>
+                      {selectedTicket.metadata?.slaStatus || 'Healthy'}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedTicket.ai_summary && (
+                  <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 mb-8 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-2 text-primary opacity-20 group-hover:opacity-100 transition-opacity">
+                      <TrendingUp size={16} />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">AI Summary</p>
+                    <p className="text-xs text-gray-300 leading-relaxed italic">"{selectedTicket.ai_summary}"</p>
+                  </div>
+                )}
+
+                <Link
+                  to={`/tickets/${selectedTicket._id}`}
+                  className="flex w-full items-center justify-center gap-3 py-4 bg-white text-black rounded-2xl font-black hover:bg-gray-100 transition-all shadow-lg"
+                >
+                  Explore Details
+                  <ArrowRight size={18} />
+                </Link>
+              </motion.div>
+            ) : (
+              <div className="cc-card p-12 text-center flex flex-col items-center justify-center border-dashed border-white/10">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-gray-600 mb-4">
+                  <ListIcon size={32} />
+                </div>
+                <h4 className="font-bold text-white mb-2">No selection</h4>
+                <p className="text-xs text-gray-500">Choose a ticket from the list or map to view details.</p>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </AnimatedPage>
+  );
+}
+
+function ArrowRight({ className, size }) {
+  return (
+    <svg 
+      className={className} 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2.5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <path d="M5 12h14m-7-7 7 7-7 7"/>
+    </svg>
   );
 }

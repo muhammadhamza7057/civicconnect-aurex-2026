@@ -74,9 +74,16 @@ async function getAllTickets(req, res) {
     if (department) filter.department = department;
     if (q) filter.$text = { $search: q };
 
-    // RBAC: staff see department tickets; super_admin sees all
-    if (req.user.role === 'staff' || req.user.role === 'department_admin') {
+    // RBAC: 
+    // - Resident: Handled by /my or 403
+    // - Super Admin: Unrestricted
+    // - Department Admin: Full department scope
+    // - Staff: Department scope + assigned tickets only
+    if (req.user.role === 'department_admin') {
       if (req.user.department) filter.department = req.user.department;
+    } else if (req.user.role === 'staff') {
+      if (req.user.department) filter.department = req.user.department;
+      filter.assigned_to = req.user._id;
     }
 
     const [data, total] = await Promise.all([
@@ -118,15 +125,23 @@ async function getTicketById(req, res) {
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
     // Access control
-    if (req.user.role === 'resident' && ticket.reporter && ticket.reporter._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Access denied' });
+    if (req.user.role === 'resident') {
+      if (!ticket.reporter || ticket.reporter._id.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: 'Access denied: Resident can only view own tickets' });
+      }
+    } else if (req.user.role === 'staff') {
+      const isAssigned = ticket.assigned_to && ticket.assigned_to._id.toString() === req.user._id.toString();
+      const inDepartment = ticket.department && ticket.department.toString() === req.user.department?.toString();
+      if (!isAssigned || !inDepartment) {
+        return res.status(403).json({ success: false, message: 'Access denied: Staff can only view assigned tickets in their department' });
+      }
+    } else if (req.user.role === 'department_admin') {
+      const inDepartment = ticket.department && ticket.department.toString() === req.user.department?.toString();
+      if (!inDepartment) {
+        return res.status(403).json({ success: false, message: 'Access denied: Admin can only view tickets in their department' });
+      }
     }
-    if ((req.user.role === 'staff' || req.user.role === 'department_admin') && req.user.department && ticket.department && ticket.department.toString() !== req.user.department.toString()) {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
-    if (req.user.role === 'resident' && ticket.reporter && ticket.reporter._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
+    // super_admin has unrestricted access
 
     return res.json({ success: true, data: ticket });
   } catch (err) {
@@ -144,7 +159,17 @@ async function updateTicketStatus(req, res) {
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
     // Only staff or above can change status
-    if (['resident'].includes(req.user.role)) return res.status(403).json({ success: false, message: 'Insufficient permissions' });
+    if (req.user.role === 'resident') return res.status(403).json({ success: false, message: 'Insufficient permissions' });
+
+    // Staff can only update their assigned tickets
+    if (req.user.role === 'staff' && ticket.assigned_to?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Staff can only update status of assigned tickets' });
+    }
+
+    // Dept Admin can update any ticket in their department
+    if (req.user.role === 'department_admin' && ticket.department?.toString() !== req.user.department?.toString()) {
+      return res.status(403).json({ success: false, message: 'Admin can only update tickets in their department' });
+    }
 
     ticket.status = status;
     await ticket.save();
@@ -169,8 +194,15 @@ async function assignTicketToStaff(req, res) {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
-    // permission: staff/department_admin
-    if (['resident'].includes(req.user.role)) return res.status(403).json({ success: false, message: 'Insufficient permissions' });
+    // permission: department_admin / super_admin only
+    if (!['department_admin', 'super_admin'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Only administrators can assign tickets' });
+    }
+
+    // Dept Admin can only assign tickets in their department
+    if (req.user.role === 'department_admin' && ticket.department?.toString() !== req.user.department?.toString()) {
+      return res.status(403).json({ success: false, message: 'Admin can only assign tickets in their department' });
+    }
 
     ticket.assigned_to = assigneeId;
     ticket.status = 'assigned';

@@ -1,236 +1,216 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BarChart3, Clock, Zap, Shield, Users, TrendingUp, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { 
+  ArrowRight, 
+  Zap, 
+  Clock,
+  Bell
+} from 'lucide-react';
+import CountUp from 'react-countup';
+import { Footer } from '../components/Footer';
 
 export function EnhancedLandingPage() {
-  const features = [
-    {
-      icon: Clock,
-      title: 'Real-time Response',
-      description: 'Live socket updates keep residents and staff synchronized every second'
-    },
-    {
-      icon: Zap,
-      title: 'AI-Powered Triage',
-      description: 'Gemini categorizes, prioritizes, and detects duplicate complaints instantly'
-    },
-    {
-      icon: TrendingUp,
-      title: 'SLA Control',
-      description: 'Green-yellow-red SLA indicators ensure no complaint is forgotten'
-    },
-    {
-      icon: Shield,
-      title: 'Role-Based Access',
-      description: 'Residents submit, staff respond, admins govern—all in one platform'
-    },
-    {
-      icon: BarChart3,
-      title: 'Real-time Analytics',
-      description: 'Executive dashboards show system health, throughput, and performance'
-    },
-    {
-      icon: Users,
-      title: 'Multi-tenant Ready',
-      description: 'Department management, staff workflows, and civic engagement in one place'
-    }
+  const stats = [
+    { value: 10000, label: 'Issues Resolved', suffix: '+' },
+    { value: 500, label: 'Active Staff', suffix: '+' },
+    { value: 24, label: 'Avg Resolution Time', suffix: 'h' },
+    { value: 99, label: 'Citizen Satisfaction', suffix: '%' }
   ];
 
-  const steps = [
+  const features = [
     {
-      number: '1',
-      title: 'Resident Reports',
-      description: 'Citizens submit issues with optional attachments',
-      action: 'Create ticket in 60 seconds'
+      icon: Zap,
+      title: 'AI Detection',
+      description: 'Gemini instantly categorizes and prioritizes incoming complaints.'
     },
     {
-      number: '2',
-      title: 'AI Processes',
-      description: 'Gemini analyzes category, priority, duplicates, urgency',
-      action: 'Auto-categorization'
+      icon: Clock,
+      title: 'SLA Tracking',
+      description: 'Real-time countdowns ensure no ticket exceeds resolution timeframes.'
     },
     {
-      number: '3',
-      title: 'Staff Responds',
-      description: 'Teams see Kanban board, AI briefing, and SLA timers',
-      action: 'Status updates live'
-    },
-    {
-      number: '4',
-      title: 'Admin Oversees',
-      description: 'Executives track KPIs, department performance, compliance',
-      action: 'Real-time dashboards'
+      icon: Bell,
+      title: 'Live Notifications',
+      description: 'Push alerts for residents and staff on every status change.'
     }
   ];
 
   return (
-    <div className="space-y-20 px-4 py-12 lg:px-8 lg:py-16">
+    <div className="relative min-h-screen bg-black text-white selection:bg-primary selection:text-white overflow-x-hidden">
       {/* HERO SECTION */}
-      <section className="mx-auto max-w-5xl space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="space-y-6"
-        >
-          <div className="flex items-center justify-center">
-            <div className="rounded-full border border-primary/30 bg-primary/10 px-4 py-2">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary">Now available</p>
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-transform duration-[10s] scale-110"
+          style={{ 
+            backgroundImage: 'url("https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1920&q=80")',
+          }}
+        />
+        <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/80 via-black/40 to-black" />
+        
+        <div className="relative z-20 container mx-auto px-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-8"
+          >
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              <span className="text-xs font-bold tracking-widest uppercase">The Future of Urban Governance</span>
             </div>
-          </div>
 
-          <h1 className="text-center text-5xl font-black tracking-tight text-text sm:text-6xl lg:text-7xl">
-            Government-grade Civic Operations
-          </h1>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.1]">
+              Every City Problem <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-success">
+                Deserves Instant Action
+              </span>
+            </h1>
 
-          <p className="mx-auto max-w-2xl text-center text-lg leading-8 text-muted sm:text-xl">
-            A modern Smart City AI platform for resident complaints, staff workflows, SLA tracking, and executive analytics.
-            Built for trust. Designed for speed.
-          </p>
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-400 leading-relaxed">
+              CivicConnect is a production-grade Smart City Operating System that connects residents, staff, and leadership in real-time.
+            </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link
-              to="/register"
-              className="flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
-            >
-              Start Free Demo
-              <ArrowRight size={18} />
-            </Link>
-            <Link
-              to="/login"
-              className="flex items-center gap-2 rounded-full border border-white/10 px-6 py-3.5 font-semibold text-text transition hover:bg-white/5"
-            >
-              Sign In
-              <ArrowRight size={18} />
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* HERO IMAGE PLACEHOLDER */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-primary/10 via-white/5 to-success/10 p-8 sm:p-12"
-        >
-          <div className="flex h-72 items-center justify-center">
-            <div className="text-center">
-              <BarChart3 size={64} className="mx-auto text-primary/30" strokeWidth={0.5} />
-              <p className="mt-4 text-sm text-muted">Interactive dashboard preview</p>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* FEATURES GRID */}
-      <section className="mx-auto max-w-6xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="mb-12 text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">Platform features</p>
-          <h2 className="mt-4 text-4xl font-black tracking-tight text-text sm:text-5xl">Built for civic operations</h2>
-        </motion.div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, idx) => {
-            const Icon = feature.icon;
-            return (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="cc-card group p-6 transition hover:border-primary/30"
-              >
-                <div className="rounded-2xl bg-primary/10 p-3 w-fit">
-                  <Icon size={24} className="text-primary" strokeWidth={1.5} />
-                </div>
-                <h3 className="mt-4 font-bold text-text">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted">{feature.description}</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/register"
+                  className="group relative flex items-center gap-2 px-8 py-4 bg-primary rounded-2xl font-bold text-white shadow-lg shadow-primary/25 overflow-hidden transition-all"
+                >
+                  Report Issue <ArrowRight size={20} />
+                </Link>
               </motion.div>
-            );
-          })}
-        </div>
-      </section>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/login"
+                  className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white backdrop-blur-sm hover:bg-white/10 transition-all"
+                >
+                  Track Complaint
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
 
-      {/* WORKFLOW STEPS */}
-      <section className="mx-auto max-w-6xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="mb-12 text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">End-to-end workflow</p>
-          <h2 className="mt-4 text-4xl font-black tracking-tight text-text sm:text-5xl">From complaint to resolution</h2>
-        </motion.div>
-
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step, idx) => (
-            <motion.div
-              key={step.number}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.15 }}
-              className="cc-card relative p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-lg font-black text-primary">
-                  {step.number}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 1 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-24 max-w-4xl mx-auto border-t border-white/10 pt-12"
+          >
+            {stats.map((stat, idx) => (
+              <div key={idx} className="text-center">
+                <div className="text-3xl md:text-4xl font-black text-white">
+                  <CountUp end={stat.value} duration={3} />
+                  {stat.suffix}
                 </div>
-                {idx < steps.length - 1 && (
-                  <ArrowRight size={20} className="hidden text-muted lg:block" />
-                )}
-              </div>
-              <h3 className="mt-4 font-bold text-text">{step.title}</h3>
-              <p className="mt-2 text-sm text-muted">{step.description}</p>
-              <div className="mt-4 rounded-full border border-primary/20 bg-primary/10 px-3 py-2">
-                <p className="text-xs font-semibold text-primary">{step.action}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* BENEFITS */}
-      <section className="mx-auto max-w-4xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="cc-card space-y-8 p-8 sm:p-12">
-          <div>
-            <h2 className="text-3xl font-black tracking-tight text-text sm:text-4xl">Why governments choose CivicConnect</h2>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2">
-            {[
-              'Citizen satisfaction increases by handling complaints faster',
-              'Staff efficiency improves with AI morning briefing and kanban workflow',
-              'Executives gain real-time visibility into civic operations',
-              'Zero complaints fall through the cracks with SLA alerts',
-              'AI detects duplicate complaints automatically',
-              'Full audit trail and compliance records for governance'
-            ].map((benefit) => (
-              <div key={benefit} className="flex items-start gap-3">
-                <CheckCircle2 size={20} className="mt-1 flex-shrink-0 text-success" strokeWidth={1.5} />
-                <p className="text-sm leading-6 text-muted">{benefit}</p>
+                <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mt-2">{stat.label}</div>
               </div>
             ))}
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </section>
 
-      {/* CTA SECTION */}
-      <section className="mx-auto max-w-4xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-12 text-center"
-        >
-          <h2 className="text-3xl font-black tracking-tight text-text sm:text-4xl">Ready to transform civic operations?</h2>
-          <p className="mt-4 text-lg text-muted">Start your free demo today. No credit card required.</p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Link
-              to="/register"
-              className="flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
+      <section className="py-32 relative overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-8"
             >
-              Get Started
-              <ArrowRight size={18} />
-            </Link>
+              <div className="inline-block px-4 py-2 bg-primary/10 rounded-lg text-primary font-bold text-sm">
+                The Platform
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black">
+                Transforming Delay into <br />
+                <span className="text-primary">Instant Resolution.</span>
+              </h2>
+              <div className="space-y-6 text-gray-400 text-lg leading-relaxed">
+                <p>
+                  Old systems rely on manual filing, paper trails, and disconnected departments. CivicConnect replaces friction with flow.
+                </p>
+                <div className="grid gap-6 mt-8">
+                  {features.map((f, i) => (
+                    <div key={i} className="flex gap-4 p-6 bg-white/5 border border-white/5 rounded-2xl hover:border-primary/30 transition-all group">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                        <f.icon size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white mb-1">{f.title}</h3>
+                        <p className="text-sm text-gray-500">{f.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="relative aspect-square"
+            >
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-[100px]" />
+              <div className="relative z-10 bg-gradient-to-br from-white/10 to-transparent border border-white/10 rounded-[40px] p-8 backdrop-blur-2xl h-full flex flex-col justify-center items-center text-center">
+                <div className="w-64 h-64 mb-8">
+                  <motion.div 
+                    animate={{ 
+                      scale: [1, 1.2, 1],
+                      rotate: [0, 90, 180, 270, 360],
+                      borderRadius: ["20%", "50%", "20%"]
+                    }}
+                    transition={{ 
+                      duration: 8, 
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="w-full h-full bg-gradient-to-tr from-primary via-blue-500 to-success opacity-20 blur-xl"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Zap size={80} className="text-primary animate-bounce" />
+                  </div>
+                </div>
+                <h3 className="text-2xl font-black mb-4">AI-Driven Engine</h3>
+                <p className="text-gray-400">
+                  Our core engine analyzes thousands of data points to ensure every citizen is heard and every problem is solved.
+                </p>
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </section>
+
+      <section className="py-32">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-r from-primary/20 to-success/20 border border-white/10 rounded-[40px] p-12 text-center relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-primary/20 blur-[100px]" />
+            <h2 className="text-4xl md:text-6xl font-black mb-6">Ready to Build a Smarter City?</h2>
+            <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+              Join 50+ municipalities already using CivicConnect to power their urban operations.
+            </p>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 px-10 py-5 bg-white text-black rounded-2xl font-black hover:bg-gray-100 transition-all"
+              >
+                Get Started Now <ArrowRight size={24} />
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 }

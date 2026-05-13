@@ -1,59 +1,75 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { 
+  Plus, 
+  TrendingUp, 
+  CheckCircle2, 
+  Map as MapIcon, 
+  List as ListIcon,
+  AlertTriangle,
+  Clock,
+  Briefcase,
+  Layers,
+  ChevronRight,
+  Sparkles
+} from 'lucide-react';
 import { SectionHeader } from '../components/SectionHeader';
-import { StatCard } from '../components/StatCard';
-import { TicketCard } from '../components/TicketCard';
+import { MetricCard } from '../components/MetricCard';
+import { EnhancedTicketCard } from '../components/EnhancedTicketCard';
 import { EmptyState } from '../components/EmptyState';
 import { AnimatedPage } from '../components/AnimatedPage';
+import { LiveCityMap } from '../components/LiveCityMap';
 import { getTickets, updateTicketStatus } from '../api/tickets';
-import { connectSocket, getSocket } from '../socket/client';
+import { connectSocket } from '../socket/client';
 import { useAuthStore } from '../store/authStore';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const columns = ['submitted', 'under_review', 'in_progress', 'resolved'];
-
-function deriveBriefing(tickets) {
-  const urgent = tickets.filter(ticket => ['high', 'critical', 'emergency'].includes(ticket.priority) || ticket.is_emergency);
-  const duplicates = tickets.filter(ticket => ticket.is_duplicate);
-  const breaches = tickets.filter(ticket => ticket.sla_due_at && new Date(ticket.sla_due_at).getTime() < Date.now() && !['resolved', 'closed'].includes(ticket.status));
-  return { urgent, duplicates, breaches };
-}
 
 export function StaffDashboard() {
   const profile = useAuthStore(state => state.profile);
   const [tickets, setTickets] = useState([]);
+  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'map'
+  const [loading, setLoading] = useState(true);
 
   const loadTickets = async () => {
-    const data = await getTickets({ per_page: 100 });
-    const list = Array.isArray(data) ? data : data?.data || [];
-    setTickets(list);
+    try {
+      const data = await getTickets({ per_page: 100 });
+      const list = Array.isArray(data) ? data : data?.data || [];
+      setTickets(list);
+    } catch (err) {
+      toast.error(err.message || 'Failed to load tickets');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadTickets().catch(err => toast.error(err.message || 'Failed to load staff tickets'));
+    loadTickets();
   }, []);
 
   useEffect(() => {
     const socket = connectSocket();
-    const sync = async payload => {
-      const id = payload?.ticketId || payload?.ticket?.id || payload?.ticket?._id;
-      if (!id) return loadTickets();
-      loadTickets();
-    };
+    const sync = () => loadTickets();
+    
     socket.on('ticket:created', sync);
     socket.on('ticket:updated', sync);
-    socket.on('ticket:aiUpdated', sync);
     socket.on('ticket:statusChanged', sync);
-    socket.on('ticket:duplicateFound', sync);
+    socket.on('ticket:assigned', sync);
+
     return () => {
       socket.off('ticket:created', sync);
       socket.off('ticket:updated', sync);
-      socket.off('ticket:aiUpdated', sync);
       socket.off('ticket:statusChanged', sync);
-      socket.off('ticket:duplicateFound', sync);
+      socket.off('ticket:assigned', sync);
     };
   }, []);
 
-  const briefing = useMemo(() => deriveBriefing(tickets), [tickets]);
+  const stats = useMemo(() => ({
+    assigned: tickets.filter(t => t.assigned_to?._id === profile._id || t.assigned_to === profile._id).length,
+    urgent: tickets.filter(t => ['high', 'critical', 'emergency'].includes(t.priority)).length,
+    overdue: tickets.filter(t => t.metadata?.slaStatus === 'red').length
+  }), [tickets, profile._id]);
 
   const grouped = useMemo(() => columns.reduce((acc, status) => {
     acc[status] = tickets.filter(ticket => ticket.status === status);
@@ -62,71 +78,113 @@ export function StaffDashboard() {
 
   const changeStatus = async (ticketId, status) => {
     await toast.promise(updateTicketStatus(ticketId, status), {
-      loading: 'Updating status...',
-      success: 'Status updated',
-      error: err => err.message || 'Unable to update status'
+      loading: 'Updating...',
+      success: 'Status synchronized',
+      error: 'Sync failed'
     });
-    await loadTickets();
+    loadTickets();
   };
 
   return (
-    <AnimatedPage className="space-y-6">
+    <AnimatedPage className="space-y-8 pb-20">
       <SectionHeader
-        eyebrow={`Department workspace${profile?.department ? ` / ${profile.department}` : ''}`}
-        title="Staff operations board"
-        description="A kanban-style workflow with AI morning briefing, SLA alerts, and instant ticket updates."
+        eyebrow={`Ops Command / ${profile.department?.name || 'Department'}`}
+        title="Operations Board"
+        description="Manage assigned tasks, monitor department workload, and respond to civic issues in real-time."
+        action={
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setViewMode(viewMode === 'kanban' ? 'map' : 'kanban')}
+              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-gray-300 hover:bg-white/10 transition-all"
+            >
+              {viewMode === 'kanban' ? <MapIcon size={18} /> : <Layers size={18} />}
+              {viewMode === 'kanban' ? 'Live Map' : 'Kanban Board'}
+            </button>
+            <button className="flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 font-black shadow-lg hover:bg-gray-100 transition-all">
+              <Sparkles size={18} />
+              AI Briefing
+            </button>
+          </div>
+        }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Urgent tickets" value={briefing.urgent.length} accent="danger" hint="High priority or emergency" />
-        <StatCard label="SLA breaches" value={briefing.breaches.length} accent="warning" hint="Needs attention before deadline" />
-        <StatCard label="Duplicates" value={briefing.duplicates.length} accent="primary" hint="Potential repeat complaints" />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <MetricCard label="Assigned to Me" value={stats.assigned} icon="tickets" accent="primary" />
+        <MetricCard label="Priority Issues" value={stats.urgent} icon="alerts" accent="danger" />
+        <MetricCard label="SLA Breaches" value={stats.overdue} icon="completed" accent="warning" />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
-        <section className="cc-card p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">AI morning briefing</p>
-          <div className="mt-4 space-y-4">
-            {[
-              ['Urgent tickets', briefing.urgent.slice(0, 4)],
-              ['SLA breaches', briefing.breaches.slice(0, 4)],
-              ['Duplicates', briefing.duplicates.slice(0, 4)]
-            ].map(([title, items]) => (
-              <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <h3 className="font-semibold text-text">{title}</h3>
-                <div className="mt-3 space-y-2">
-                  {items.length ? items.map(item => <p key={item._id} className="text-sm text-muted">{item.ticket_code} · {item.title}</p>) : <p className="text-sm text-muted">None right now.</p>}
+      <AnimatePresence mode="wait">
+        {viewMode === 'map' ? (
+          <motion.div
+            key="map"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="space-y-6"
+          >
+            <div className="cc-card p-4 border-primary/20 flex items-center justify-between">
+              <p className="text-xs font-black uppercase tracking-widest text-gray-500">Live Department Activity</p>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-success">
+                  <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  Sockets Active
+                </div>
+              </div>
+            </div>
+            <LiveCityMap tickets={tickets} zoom={13} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="kanban"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid gap-6 lg:grid-cols-4"
+          >
+            {columns.map((status, idx) => (
+              <div key={status} className="flex flex-col gap-4">
+                <div className="flex items-center justify-between px-2">
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+                    {status.replace('_', ' ')}
+                  </h3>
+                  <span className="text-[10px] font-black bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-gray-400">
+                    {grouped[status].length}
+                  </span>
+                </div>
+                
+                <div className="flex-1 space-y-4 min-h-[500px] rounded-[32px] bg-black/20 border border-white/5 p-3">
+                  {grouped[status].length > 0 ? grouped[status].map((ticket) => (
+                    <div key={ticket._id} className="group relative">
+                      <EnhancedTicketCard 
+                        ticket={ticket} 
+                        compact 
+                        isAssigned={ticket.assigned_to?._id === profile._id || ticket.assigned_to === profile._id}
+                      />
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        {columns.filter(c => c !== status).slice(0, 2).map(next => (
+                          <button 
+                            key={next}
+                            onClick={() => changeStatus(ticket._id, next)}
+                            className="p-1.5 rounded-lg bg-black/80 border border-white/10 text-[10px] font-bold text-gray-400 hover:text-white hover:border-primary/50 transition-all"
+                            title={`Move to ${next}`}
+                          >
+                            <ChevronRight size={14} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="h-40 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-[24px]">
+                      <p className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">Empty</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-4">
-          {columns.map(status => (
-            <div key={status} className="cc-card p-4">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold capitalize text-text">{status.replace('_', ' ')}</h3>
-                <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-muted">{grouped[status].length}</span>
-              </div>
-              <div className="mt-4 space-y-3">
-                {grouped[status].length ? grouped[status].map(ticket => (
-                  <div key={ticket._id} className="rounded-2xl border border-white/10 bg-black/10 p-3">
-                    <TicketCard ticket={ticket} compact />
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {['under_review', 'in_progress', 'resolved'].map(next => (
-                        <button key={next} onClick={() => changeStatus(ticket._id, next)} className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-text transition hover:bg-white/5">
-                          Move to {next.replace('_', ' ')}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )) : <EmptyState title="Clear lane" description="No tickets in this status." />}
-              </div>
-            </div>
-          ))}
-        </section>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AnimatedPage>
   );
 }
