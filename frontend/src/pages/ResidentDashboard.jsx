@@ -9,7 +9,6 @@ import { AnimatedPage } from '../components/AnimatedPage';
 import { getMyTickets, getTicketById } from '../api/tickets';
 import { useAuthStore } from '../store/authStore';
 import { connectSocket, getSocket } from '../socket/client';
-import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 export function ResidentDashboard() {
   const profile = useAuthStore(state => state.profile);
@@ -94,8 +93,6 @@ export function ResidentDashboard() {
         <StatCard label="Resolved" value={counts.resolved} accent="success" hint="Closed or completed issues" />
         <StatCard label="Urgent issues" value={counts.urgent} accent="warning" hint="Need immediate civic attention" />
       </div>
-
-      <DemoAccessPanel compact />
 
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
         <section className="space-y-4">

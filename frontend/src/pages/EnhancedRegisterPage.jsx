@@ -22,6 +22,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { listDepartments } from '../api/departments';
 import { classNames } from '../utils/classNames';
+import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 function routeByRole(role) {
   if (role === 'resident') return '/resident';
@@ -78,6 +79,13 @@ export function EnhancedRegisterPage() {
   const role = watch('role');
 
   useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    root.setAttribute('data-theme', 'light');
+    window.localStorage.setItem('civicconnect-theme', 'light');
+  }, []);
+
+  useEffect(() => {
     setDeptLoading(true);
     setDeptError(null);
     listDepartments()
@@ -130,13 +138,26 @@ export function EnhancedRegisterPage() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
-      className="cc-card w-full overflow-hidden rounded-2xl shadow-xl ring-1 ring-border/50"
+      className="cc-card w-full overflow-hidden rounded-[28px] shadow-soft ring-1 ring-border/50"
     >
-      <div className="border-b border-border/60 bg-gradient-to-br from-primary/10 via-transparent to-success/5 px-6 py-8 sm:px-8">
-        <h1 className="text-2xl font-bold tracking-tight text-text sm:text-[1.65rem]">Create your account</h1>
-        <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">
-          Tap the box that fits you. Only the fields you need will show up next.
-        </p>
+      <div className="border-b border-border/60 bg-gradient-to-br from-primary/10 via-surface to-success/10 px-6 py-8 sm:px-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Demo access and signup</p>
+            <h1 className="text-3xl font-black tracking-tight text-text sm:text-4xl">Create your account or use a demo login</h1>
+            <p className="max-w-xl text-[15px] leading-relaxed text-muted">
+              Choose a role, finish the fields you need, or use the ready-made demo accounts below to jump straight into the live dashboards.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border/60 bg-bg/70 px-4 py-3 text-sm text-text shadow-soft">
+            <p className="font-semibold text-primary">Light theme enabled</p>
+            <p className="mt-1 text-muted">This page uses a brighter palette for clearer text and cleaner demo sign-up.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-b border-border/60 bg-surface/70 px-6 py-6 sm:px-8">
+        <DemoAccessPanel />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-0" noValidate aria-label="Register">

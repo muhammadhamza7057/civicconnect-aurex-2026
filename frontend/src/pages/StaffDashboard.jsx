@@ -23,7 +23,6 @@ import { getTickets, updateTicketStatus } from '../api/tickets';
 import { connectSocket } from '../socket/client';
 import { useAuthStore } from '../store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 const columns = ['submitted', 'under_review', 'in_progress', 'resolved'];
 
@@ -128,8 +127,6 @@ export function StaffDashboard() {
         </div>
       </div>
 
-      <DemoAccessPanel compact />
-
       <AnimatePresence mode="wait">
         {viewMode === 'map' ? (
           <motion.div
@@ -170,30 +167,32 @@ export function StaffDashboard() {
                 </div>
                 
                 <div className="min-h-[500px] flex-1 space-y-4 rounded-[28px] border border-border/60 bg-surface/70 p-3 shadow-soft">
-                  {grouped[status].length > 0 ? grouped[status].map((ticket) => (
-                    <div key={ticket._id} className="group relative">
-                      <EnhancedTicketCard 
-                        ticket={ticket} 
-                        compact 
-                        isAssigned={ticket.assigned_to?._id === profile._id || ticket.assigned_to === profile._id}
-                      />
+                  {grouped[status].length > 0 ? (
+                    grouped[status].map((ticket) => (
+                      <div key={ticket._id} className="group relative">
+                        <EnhancedTicketCard
+                          ticket={ticket}
+                          compact
+                          isAssigned={ticket.assigned_to?._id === profile._id || ticket.assigned_to === profile._id}
+                        />
                         <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        {columns.filter(c => c !== status).slice(0, 2).map(next => (
-                          <button 
-                            key={next}
-                            onClick={() => changeStatus(ticket._id, next)}
+                          {columns.filter(c => c !== status).slice(0, 2).map(next => (
+                            <button
+                              key={next}
+                              onClick={() => changeStatus(ticket._id, next)}
                               className="rounded-lg border border-border/60 bg-bg/90 p-1.5 text-[10px] font-bold text-muted transition-all hover:border-primary/50 hover:text-text"
-                            title={`Move to ${next}`}
-                          >
-                            <ChevronRight size={14} />
-                          </button>
-                        ))}
+                              title={`Move to ${next}`}
+                            >
+                              <ChevronRight size={14} />
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )) : (
-                    <div className="h-40 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-[24px]">
+                    ))
+                  ) : (
                     <div className="flex h-40 flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-border/60 bg-bg/30">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Empty</p>
+                    </div>
                   )}
                 </div>
               </div>

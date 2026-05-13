@@ -5,13 +5,6 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { DemoAccessPanel, demoAccounts } from '../components/DemoAccessPanel';
-
-function routeByRole(role) {
-  if (role === 'resident') return '/resident';
-  if (role === 'staff') return '/staff';
-  return '/admin';
-}
 
 const inputBase =
   'w-full rounded-2xl border-2 border-border bg-surface py-3.5 pl-12 text-base text-text placeholder:text-muted/90 shadow-sm transition focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60';
@@ -22,29 +15,14 @@ const labelClass = 'text-[15px] font-semibold leading-snug text-text';
 
 export function EnhancedLoginPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const login = useAuthStore(state => state.login);
   const [showPassword, setShowPassword] = useState(false);
-  const demoRole = searchParams.get('demo');
-  const demoAccount = demoAccounts.find(account => account.role === demoRole);
   const { register, handleSubmit, setValue, getValues, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
-      identifier: demoAccount?.staffId || demoAccount?.email || '',
-      password: demoAccount?.password || ''
+      identifier: '',
+      password: ''
     }
   });
-
-  useEffect(() => {
-    if (!demoAccount) return;
-    setValue('identifier', demoAccount.staffId || demoAccount.email, { shouldValidate: true });
-    setValue('password', demoAccount.password, { shouldValidate: true });
-  }, [demoAccount, setValue]);
-
-  const useDemoAccount = account => {
-    setValue('identifier', account.staffId || account.email, { shouldValidate: true });
-    setValue('password', account.password, { shouldValidate: true });
-    toast.success(`${account.label} loaded. Sign in to open the ${account.role.replace('_', ' ')} dashboard.`);
-  };
 
   const onSubmit = async values => {
     const raw = values.identifier.trim();
@@ -80,11 +58,6 @@ export function EnhancedLoginPage() {
           <strong className="font-semibold text-text">staff ID</strong> if your organization signs you in that way.
           Staff IDs look like codes or numbers—if you are unsure, ask your administrator.
         </p>
-        {demoAccount ? (
-          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-text">
-            Demo role preloaded: <span className="font-semibold text-primary">{demoAccount.label}</span>. Press sign in to open the dashboard.
-          </div>
-        ) : null}
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate aria-label="Sign in form">
@@ -186,8 +159,6 @@ export function EnhancedLoginPage() {
           Create an account
         </Link>
       </footer>
-
-      <DemoAccessPanel compact onUseDemo={useDemoAccount} />
     </motion.div>
   );
 }

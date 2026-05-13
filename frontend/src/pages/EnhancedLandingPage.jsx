@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import CountUp from 'react-countup';
 import { Footer } from '../components/Footer';
-import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 const WHO_ROLES = [
   {
@@ -234,12 +233,6 @@ export function EnhancedLandingPage() {
               Go to register <ArrowRight size={18} />
             </Link>
           </motion.div>
-        </div>
-      </section>
-
-      <section className="px-6 py-24">
-        <div className="mx-auto max-w-7xl">
-          <DemoAccessPanel />
         </div>
       </section>
 

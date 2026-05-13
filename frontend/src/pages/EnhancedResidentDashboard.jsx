@@ -12,7 +12,6 @@ import { getMyTickets, getTicketById } from '../api/tickets';
 import { useAuthStore } from '../store/authStore';
 import { connectSocket } from '../socket/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 export function EnhancedResidentDashboard() {
   const profile = useAuthStore(state => state.profile);
@@ -104,8 +103,6 @@ export function EnhancedResidentDashboard() {
         <MetricCard label="Resolved" value={counts.resolved} icon="completed" accent="success" />
         <MetricCard label="Urgent Alerts" value={counts.urgent} icon="alerts" accent="danger" />
       </div>
-
-      <DemoAccessPanel compact />
 
       {/* MAIN CONTENT AREA */}
       <div className="grid gap-8 lg:grid-cols-12">

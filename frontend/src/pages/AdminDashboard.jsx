@@ -15,7 +15,6 @@ import { LiveCityMap } from '../components/LiveCityMap';
 import { client as axiosInstance } from '../api/client';
 import { getTickets } from '../api/tickets';
 import { useAuthStore } from '../store/authStore';
-import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 export function AdminDashboard() {
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -119,8 +118,6 @@ export function AdminDashboard() {
           </button>
         </div>
       </div>
-
-      <DemoAccessPanel compact />
 
       <AnimatePresence mode="wait">
         {loading ? (
