@@ -1,0 +1,100 @@
+// Load and validate environment (auto-creates .env if missing)
+require('./config/env');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const http = require('http');
+const { createServer } = http;
+const { Server } = require('socket.io');
+const apiRouter = require('./routes/api');
+const { connect, mongoose } = require('./lib/mongo');
+const cookieParser = require('cookie-parser');
+const { requestLogger } = require('./middleware/logger');
+const geminiService = require('./ai/geminiService');
+require('./jobs/aiWorker');
+
+const app = express();
+
+// Security
+app.use(helmet());
+
+// CORS whitelist support
+const origins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean);
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // allow server-to-server or curl
+    if (origins.length === 0 || origins.includes(origin) || origins.includes('*')) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  }
+};
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(cookieParser());
+app.use(requestLogger);
+
+// health endpoint (checks DB and AI readiness)
+app.get('/api/v1/health', async (req, res) => {
+  const uptime = process.uptime();
+  const dbState = mongoose && mongoose.connection && mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  let aiStatus = 'unavailable';
+  try {
+    // quick lightweight call to AI service; timed to 3s in geminiService
+    const result = await Promise.race([
+      geminiService.analyzeTicket('health-check: is service available?'),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000))
+    ]);
+    if (result && (result.category || result.summary)) aiStatus = 'ready';
+  } catch (err) {
+    aiStatus = process.env.GEMINI_API_KEY ? 'unreachable' : 'disabled';
+  }
+
+  res.json({ status: 'OK', database: dbState, ai: aiStatus, sockets: (global.__io_initialized ? 'active' : 'inactive'), uptime: Math.floor(uptime) });
+});
+
+app.use('/api/v1', apiRouter);
+
+const PORT = Number(process.env.PORT || 5000);
+const MAX_PORT_RETRIES = Number(process.env.PORT_RETRY_LIMIT || 5);
+const server = createServer(app);
+const io = new Server(server, { cors: { origin: process.env.FRONTEND_URL || '*' } });
+
+io.on('connection', (socket) => {
+  console.log('socket connected', socket.id);
+  socket.once('disconnect', () => console.log('socket disconnected', socket.id));
+});
+
+const { setIO } = require('./lib/socket');
+
+setIO(io);
+global.__io_initialized = true;
+
+function startServer(port, retriesLeft) {
+  const onListening = () => {
+    console.log(`CivicConnect backend running on port ${port}`);
+  };
+
+  const onError = (err) => {
+    if (err && err.code === 'EADDRINUSE' && retriesLeft > 0) {
+      const nextPort = port + 1;
+      console.warn(`Port ${port} is in use, trying ${nextPort}`);
+      server.removeListener('listening', onListening);
+      server.removeListener('error', onError);
+      server.close(() => startServer(nextPort, retriesLeft - 1));
+      return;
+    }
+
+    console.error('Server failed to start:', err && err.message ? err.message : err);
+    process.exit(1);
+  };
+
+  server.once('listening', onListening);
+  server.once('error', onError);
+  server.listen(port);
+}
+
+startServer(PORT, MAX_PORT_RETRIES);
+
+module.exports = { app, io };
+
+// Connect to MongoDB
+connect();

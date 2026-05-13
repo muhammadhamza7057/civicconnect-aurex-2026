@@ -1,0 +1,39 @@
+{
+  "name": "civicconnect-backend",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon --watch src --exec node src/index.js",
+    "start": "node src/index.js",
+    "seed": "node ../scripts/seed_mongo.js",
+    "testflow": "node ../scripts/test_flow.js",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.0.0",
+    "axios": "^1.16.0",
+    "bcrypt": "^5.1.0",
+    "cloudinary": "^2.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "express-rate-limit": "^6.7.0",
+    "express-validator": "^7.0.0",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb-memory-server": "^8.11.0",
+    "mongoose": "^7.8.9",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.0",
+    "on-finished": "^2.4.1",
+    "pg": "^8.0.0",
+    "socket.io": "^4.7.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "nodemon": "^2.0.0"
+  }
+}
