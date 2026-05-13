@@ -5,14 +5,15 @@
 @tailwind utilities;
 
 :root {
-  --bg: 17 24 39;
-  --bg-soft: 24 34 54;
-  --surface: 10 15 24;
-  --surface-2: 15 23 42;
-  --text: 226 232 240;
-  --muted: 148 163 184;
-  --border: 51 65 85;
-  --primary: 59 130 246;
+  /* Dark theme - tuned for realism and improved contrast */
+  --bg: 10 14 22; /* deep charcoal */
+  --bg-soft: 18 24 36; /* softer gradient stop */
+  --surface: 24 30 44; /* card surfaces slightly lighter than bg */
+  --surface-2: 32 40 56; /* secondary surface for subtle depth */
+  --text: 232 235 239; /* bright, readable text */
+  --muted: 148 163 184; /* muted text */
+  --border: 50 60 78; /* subtle borders */
+  --primary: 37 99 235; /* richer blue for controls */
   --success: 34 197 94;
   --warning: 234 179 8;
   --danger: 239 68 68;
@@ -29,12 +30,13 @@ html.dark {
 
 html:not(.dark) {
   color-scheme: light;
-  --bg: 245 247 251;
-  --bg-soft: 238 242 247;
+  /* Light theme - tuned for clarity and neutral palette */
+  --bg: 247 249 250;
+  --bg-soft: 241 244 247;
   --surface: 255 255 255;
-  --surface-2: 248 250 252;
-  --text: 15 23 42;
-  --muted: 71 85 105;
+  --surface-2: 250 252 253;
+  --text: 20 24 31;
+  --muted: 75 85 99;
   --border: 226 232 240;
 }
 
@@ -46,8 +48,8 @@ body {
   margin: 0;
   font-family: 'Inter', 'Manrope', system-ui, sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
-    radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 25%),
+    radial-gradient(circle at top left, rgba(var(--primary), 0.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(var(--success), 0.06), transparent 25%),
     linear-gradient(180deg, rgb(var(--bg)) 0%, rgb(var(--bg-soft)) 100%);
   color: rgb(var(--text));
 }
@@ -61,15 +63,17 @@ body {
 }
 
 .cc-card {
-  @apply rounded-3xl border shadow-2xl shadow-slate-950/20 backdrop-blur-xl;
-  border-color: rgb(var(--border) / 0.55);
-  background: linear-gradient(180deg, rgb(var(--surface) / 0.92), rgb(var(--surface-2) / 0.92));
+  @apply rounded-2xl border shadow-lg backdrop-blur-sm;
+  border-color: rgb(var(--border) / 0.6);
+  background: linear-gradient(180deg, rgb(var(--surface) / 0.96), rgb(var(--surface-2) / 0.96));
+  color: rgb(var(--text));
+  padding: 1rem;
 }
 
 .cc-card-ghost {
-  @apply rounded-3xl border;
-  border-color: rgb(var(--border) / 0.35);
-  background: rgb(var(--surface) / 0.62);
+  @apply rounded-2xl border;
+  border-color: rgb(var(--border) / 0.28);
+  background: rgb(var(--surface) / 0.72);
 }
 
 .cc-ring {
@@ -77,9 +81,10 @@ body {
 }
 
 .glass-panel {
-  background: rgba(15, 23, 42, 0.58);
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  backdrop-filter: blur(24px);
+  background: rgba(12, 18, 28, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(10px);
+  color: rgb(var(--text));
 }
 
 .light .glass-panel,
@@ -130,11 +135,11 @@ html:not(.dark) .glass-panel {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.22);
 }
 
 /* Leaflet Custom Styles */
