@@ -21,6 +21,8 @@ import { StaffDashboard } from './pages/StaffDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { TicketDetailPage } from './pages/TicketDetailPage';
 import { CreateTicketPage } from './pages/CreateTicketPage';
+import { PermitsPage } from './pages/PermitsPage';
+import { AnnouncementsPage } from './pages/AnnouncementsPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -89,7 +91,7 @@ function AppRoutes() {
             path="/staff"
             element={
               <ProtectedRoute>
-                <RoleBasedRoute allowedRoles={["staff", "department_admin", "super_admin"]}>
+                <RoleBasedRoute allowedRoles={['staff', 'admin', 'super_admin']}>
                   <AppShell>
                     <StaffDashboard />
                   </AppShell>
@@ -101,7 +103,7 @@ function AppRoutes() {
             path="/admin"
             element={
               <ProtectedRoute>
-                <RoleBasedRoute allowedRoles={["department_admin", "super_admin"]}>
+                <RoleBasedRoute allowedRoles={['admin', 'super_admin']}>
                   <AppShell>
                     <AdminDashboard />
                   </AppShell>
@@ -125,6 +127,26 @@ function AppRoutes() {
               <ProtectedRoute>
                 <AppShell>
                   <TicketDetailPage />
+                </AppShell>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/permits"
+            element={
+              <ProtectedRoute>
+                <AppShell>
+                  <PermitsPage />
+                </AppShell>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/announcements"
+            element={
+              <ProtectedRoute>
+                <AppShell>
+                  <AnnouncementsPage />
                 </AppShell>
               </ProtectedRoute>
             }

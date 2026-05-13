@@ -8,16 +8,18 @@ const authorizeRoles = require('../middleware/authorizeRoles');
 
 router.use(cookieParser());
 
-// Rate limit middleware can be applied per-route
 router.post('/register', rateLimiter({ windowMs: 60 * 1000, max: 6 }), authController.register);
 router.post('/login', rateLimiter({ windowMs: 60 * 1000, max: 8 }), authController.login);
 router.post('/refresh', rateLimiter({ windowMs: 60 * 1000, max: 30 }), authController.refresh);
 router.post('/logout', authenticateUser, authController.logout);
 
 router.get('/me', authenticateUser, authController.me);
+router.patch('/profile', authenticateUser, authController.updateProfile);
 
-// Admin check route
-router.get('/admin-check', authenticateUser, authorizeRoles(['department_admin']), (req, res) => {
+router.post('/2fa/verify-sim', authenticateUser, authController.verifyTwoFactorSim);
+router.post('/security/ip-restriction-sim', authenticateUser, authController.setIpRestrictionSim);
+
+router.get('/admin-check', authenticateUser, authorizeRoles(['admin']), (req, res) => {
   res.json({ data: { ok: true, role: req.user.role } });
 });
 

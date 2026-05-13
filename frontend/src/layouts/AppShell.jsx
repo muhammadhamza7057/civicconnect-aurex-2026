@@ -5,14 +5,12 @@ import {
   LayoutDashboard, 
   PlusCircle, 
   ShieldAlert, 
-  Users, 
-  Settings, 
   LogOut, 
   Bell, 
   Menu, 
   X,
-  Map as MapIcon,
-  BarChart3
+  FileText,
+  Megaphone
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useUiStore } from '../store/uiStore';
@@ -24,19 +22,25 @@ import toast from 'react-hot-toast';
 const navigationByRole = {
   resident: [
     { to: '/resident', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/tickets/new', label: 'Create Ticket', icon: PlusCircle }
+    { to: '/tickets/new', label: 'Create Ticket', icon: PlusCircle },
+    { to: '/permits', label: 'Permits', icon: FileText },
+    { to: '/announcements', label: 'News', icon: Megaphone }
   ],
   staff: [
     { to: '/staff', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/tickets/new', label: 'New Ticket', icon: PlusCircle }
+    { to: '/tickets/new', label: 'Queue', icon: PlusCircle },
+    { to: '/permits', label: 'Permits', icon: FileText },
+    { to: '/announcements', label: 'News', icon: Megaphone }
   ],
-  department_admin: [
-    { to: '/admin', label: 'Admin Panel', icon: ShieldAlert },
-    { to: '/staff', label: 'Staff View', icon: LayoutDashboard }
+  admin: [
+    { to: '/admin', label: 'Command', icon: ShieldAlert },
+    { to: '/staff', label: 'Staff queue', icon: LayoutDashboard },
+    { to: '/announcements', label: 'Comms', icon: Megaphone }
   ],
   super_admin: [
     { to: '/admin', label: 'Global Admin', icon: ShieldAlert },
-    { to: '/staff', label: 'Staff View', icon: LayoutDashboard }
+    { to: '/staff', label: 'Staff view', icon: LayoutDashboard },
+    { to: '/announcements', label: 'Comms', icon: Megaphone }
   ]
 };
 
@@ -64,7 +68,7 @@ export function AppShell({ children }) {
       });
 
       socket.on('ticket:assigned', (data) => {
-        if (data.assigneeId === profile._id) {
+        if (data.assigneeId === profile.id) {
           toast.success('A new ticket has been assigned to you!', { icon: '👤', duration: 5000 });
         }
       });
@@ -150,10 +154,10 @@ export function AppShell({ children }) {
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4">Account</p>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center font-bold">
-                  {profile?.full_name?.charAt(0)}
+                  {(profile?.name || profile?.full_name)?.charAt(0)}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-bold truncate text-sm">{profile?.full_name}</p>
+                  <p className="font-bold truncate text-sm">{profile?.name || profile?.full_name}</p>
                   <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
                 </div>
               </div>
@@ -192,7 +196,7 @@ export function AppShell({ children }) {
                     <span className="opacity-30">/</span>
                     <span className="text-primary">{location.pathname.replace('/', '') || 'dashboard'}</span>
                   </div>
-                  <h2 className="text-xl font-black">{profile?.full_name?.split(' ')[0]}'s Workspace</h2>
+                  <h2 className="text-xl font-black">{(profile?.name || profile?.full_name || 'User')?.split(' ')[0]}&apos;s Workspace</h2>
                 </div>
               </div>
 

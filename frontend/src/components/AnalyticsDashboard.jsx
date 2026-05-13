@@ -12,7 +12,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
-import { TrendingUp, Users, CheckCircle2, AlertCircle } from 'lucide-react';
+import { TrendingUp, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -61,7 +61,16 @@ const chartOptions = {
 };
 
 export function AnalyticsDashboard({ data = {}, type = 'system' }) {
-  const { statusCounts = [], priorityCounts = [], deptCounts = [], staffPerformance = [], totalTickets = 0 } = data;
+  const {
+    statusCounts = [],
+    priorityCounts = [],
+    deptCounts = [],
+    staffPerformance = [],
+    totalTickets = 0,
+    resolvedRatePct = 0,
+    slaCompliancePct = 0,
+    slaBreached = 0
+  } = data;
 
   const statusData = {
     labels: statusCounts.map(s => s._id || 'Unknown'),
@@ -111,9 +120,9 @@ export function AnalyticsDashboard({ data = {}, type = 'system' }) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Tickets', value: totalTickets, icon: TrendingUp, color: 'text-primary' },
-          { label: 'Resolved Rate', value: '84%', icon: CheckCircle2, color: 'text-success' },
-          { label: 'SLA Compliant', value: '92%', icon: Shield, color: 'text-blue-400' },
-          { label: 'Critical Issues', value: priorityCounts.find(p => p._id === 'emergency')?.count || 0, icon: AlertCircle, color: 'text-red-500' }
+          { label: 'Resolved rate', value: `${resolvedRatePct}%`, icon: CheckCircle2, color: 'text-success' },
+          { label: 'SLA compliance', value: `${slaCompliancePct}%`, icon: Shield, color: 'text-blue-400' },
+          { label: 'SLA breaches (open)', value: slaBreached, icon: AlertCircle, color: 'text-red-500' }
         ].map((stat, i) => (
           <div key={i} className="cc-card p-6 flex items-center justify-between">
             <div>
@@ -153,24 +162,5 @@ export function AnalyticsDashboard({ data = {}, type = 'system' }) {
         </div>
       </div>
     </div>
-  );
-}
-
-// Re-using Shield icon from lucide-react (imported via individual names)
-function Shield({ className, size, strokeWidth }) {
-  return (
-    <svg 
-      className={className} 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth={strokeWidth} 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
   );
 }

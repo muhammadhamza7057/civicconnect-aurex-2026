@@ -23,6 +23,8 @@ async function authenticateUser(req, res, next) {
       return res.status(401).json({ error: { code: 'unauthorized', message: 'User not found or inactive' } });
     }
 
+    if (user.role === 'department_admin') user.role = 'admin';
+
     req.user = user;
     next();
   } catch (err) {

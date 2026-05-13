@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import React from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, MapPin } from 'lucide-react';
 
 // Fix for default marker icons in React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -18,10 +17,11 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const getMarkerIcon = (priority, status) => {
-  let color = '#3b82f6'; // blue
-  if (status === 'resolved') color = '#22c55e'; // green
-  else if (priority === 'emergency' || priority === 'critical') color = '#ef4444'; // red
-  else if (priority === 'high') color = '#f59e0b'; // orange/yellow
+  let color = '#3b82f6';
+  if (status === 'resolved' || status === 'closed') color = '#22c55e';
+  else if (priority === 'emergency' || priority === 'critical') color = '#ef4444';
+  else if (priority === 'medium') color = '#eab308';
+  else if (priority === 'high') color = '#f59e0b';
 
   const svgIcon = `
     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -50,8 +50,8 @@ export function LiveCityMap({ tickets = [], center = [40.7128, -74.0060], zoom =
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         {tickets.map((ticket) => {
-          const loc = ticket.metadata?.location;
-          if (!loc || !loc.lat || !loc.lng) return null;
+          const loc = ticket.location || ticket.metadata?.location;
+          if (!loc || loc.lat == null || loc.lng == null) return null;
 
           return (
             <Marker 
@@ -73,7 +73,7 @@ export function LiveCityMap({ tickets = [], center = [40.7128, -74.0060], zoom =
                       {ticket.priority}
                     </span>
                     <span className="text-[10px] font-bold uppercase text-gray-400">
-                      {ticket.ticket_code}
+                      {ticket.ticket_code || ticket.ticket_id}
                     </span>
                   </div>
                   <h3 className="font-bold text-gray-900 mb-1">{ticket.title}</h3>
@@ -101,12 +101,12 @@ export function LiveCityMap({ tickets = [], center = [40.7128, -74.0060], zoom =
             <span>Emergency / Critical</span>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-gray-300">
-            <div className="w-2 h-2 rounded-full bg-orange-500" />
-            <span>High Priority</span>
+            <div className="w-2 h-2 rounded-full bg-amber-400" />
+            <span>Medium priority</span>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-gray-300">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span>Medium / Low</span>
+            <span>Low / other</span>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-gray-300">
             <div className="w-2 h-2 rounded-full bg-green-500" />

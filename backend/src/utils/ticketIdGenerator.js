@@ -11,7 +11,7 @@ async function nextTicketCode(prefix = 'INF') {
   ).lean();
 
   const seq = updated.seq || 1;
-  const padded = String(seq).padStart(5, '0');
+  const padded = String(seq).padStart(4, '0');
   return `${prefix}-${year}-${padded}`;
 }
 

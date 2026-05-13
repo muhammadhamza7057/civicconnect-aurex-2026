@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  BarChart3, 
   Map as MapIcon, 
   Download, 
   RefreshCw, 
@@ -20,9 +19,25 @@ import { useAuthStore } from '../store/authStore';
 export function AdminDashboard() {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [tickets, setTickets] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('analytics'); // 'analytics' or 'map'
+  const [viewMode, setViewMode] = useState('analytics');
   const profile = useAuthStore(state => state.profile);
+
+  const exportCsv = async () => {
+    try {
+      const res = await axiosInstance.get('/analytics/export/tickets.csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'civicconnect-tickets.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success('CSV exported');
+    } catch (err) {
+      toast.error(err.message || 'Export failed');
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -46,6 +61,14 @@ export function AdminDashboard() {
     fetchData();
   }, [profile.role]);
 
+  useEffect(() => {
+    if (profile.role !== 'super_admin') return;
+    axiosInstance
+      .get('/audit-logs')
+      .then(res => setAuditLogs(res.data?.data || []))
+      .catch(() => setAuditLogs([]));
+  }, [profile.role]);
+
   return (
     <AnimatedPage className="space-y-8 pb-20">
       <SectionHeader
@@ -67,9 +90,13 @@ export function AdminDashboard() {
             >
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
             </button>
-            <button className="hidden md:flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 font-black shadow-lg hover:bg-gray-100 transition-all">
+            <button
+              type="button"
+              onClick={exportCsv}
+              className="hidden md:flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 font-black shadow-lg hover:bg-gray-100 transition-all"
+            >
               <Download size={18} />
-              Export Reports
+              Export CSV
             </button>
           </div>
         }
@@ -125,6 +152,30 @@ export function AdminDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {profile.role === 'super_admin' && auditLogs.length > 0 ? (
+        <div className="cc-card p-6">
+          <p className="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Audit trail</p>
+          <div className="overflow-x-auto text-sm">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                  <th className="pb-2">Action</th>
+                  <th className="pb-2">When</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditLogs.slice(0, 15).map((row, i) => (
+                  <tr key={i} className="border-t border-white/5 text-gray-300">
+                    <td className="py-2 font-semibold text-white">{row.action}</td>
+                    <td className="py-2">{row.timestamp ? new Date(row.timestamp).toLocaleString() : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
     </AnimatedPage>
   );
 }

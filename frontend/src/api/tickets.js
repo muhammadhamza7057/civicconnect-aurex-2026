@@ -25,17 +25,17 @@ export async function createTicket(payload) {
 }
 
 export async function updateTicketStatus(id, status) {
-  const response = await client.patch(`/tickets/${id}/status`, { status });
+  const response = await client.put(`/tickets/${id}/status`, { status });
   return unwrap(response);
 }
 
 export async function assignTicket(id, assigneeId) {
-  const response = await client.patch(`/tickets/${id}/assign`, { assigneeId });
+  const response = await client.post(`/tickets/${id}/assign`, { assigneeId });
   return unwrap(response);
 }
 
-export async function addTicketComment(id, body) {
-  const response = await client.post(`/tickets/${id}/comments`, { body });
+export async function addTicketComment(id, body, visibility = 'public') {
+  const response = await client.post(`/tickets/${id}/comments`, { message: body, visibility });
   return unwrap(response);
 }
 

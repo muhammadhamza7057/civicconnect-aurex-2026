@@ -2,11 +2,43 @@ const { validationResult } = require('express-validator');
 const Ticket = require('../models/Ticket');
 const TicketComment = require('../models/TicketComment');
 const AuditLog = require('../models/AuditLog');
+const User = require('../models/User');
 const { nextTicketCode } = require('../utils/ticketIdGenerator');
 const { computeSLA } = require('../services/slaService');
 const { uploadFiles } = require('../services/uploadService');
 const { getIO } = require('../lib/socket');
 const { enqueueTicketAI } = require('../jobs/queue');
+const { notifyUser } = require('../lib/notify');
+
+function emitTicket(io, event, payload) {
+  io && io.emit(event, payload);
+  if (event !== 'ticket:updated') {
+    io && io.emit('ticket:updated', payload);
+  }
+}
+
+function parseLocation(raw) {
+  if (raw == null) return null;
+  let loc = raw;
+  if (typeof loc === 'string') {
+    try {
+      loc = JSON.parse(loc);
+    } catch (_) {
+      return null;
+    }
+  }
+  if (typeof loc !== 'object') return null;
+  const lat = Number(loc.lat);
+  const lng = Number(loc.lng);
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+  return { lat, lng, text: loc.text || '' };
+}
+
+async function notifyDepartmentStaff(departmentId, message, type, meta) {
+  if (!departmentId) return;
+  const staff = await User.find({ role: 'staff', department: departmentId }).select('_id').lean();
+  await Promise.all(staff.map(s => notifyUser(s._id, message, type, meta)));
+}
 
 async function createTicket(req, res) {
   try {
@@ -15,18 +47,18 @@ async function createTicket(req, res) {
       return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
     }
 
-    const { title, description, priority = 'medium', department, location } = req.body;
+    const { title, description, priority = 'medium' } = req.body;
+    const department = req.body.department || req.body.department_id;
+    const location = parseLocation(req.body.location);
 
-    // Handle attachments
     const files = req.files || [];
     if (files.length > 5) return res.status(400).json({ success: false, message: 'Max 5 attachments allowed' });
     const attachments = await uploadFiles(files);
 
-    // Generate ticket code
     const ticket_code = await nextTicketCode('INF');
-
-    // SLA
     const { slaDeadline, slaStatus } = computeSLA(priority);
+
+    const metadata = { slaStatus, ...(location ? { location } : {}) };
 
     const ticketData = {
       ticket_code,
@@ -37,20 +69,40 @@ async function createTicket(req, res) {
       priority,
       attachments,
       sla_due_at: slaDeadline,
-      metadata: { slaStatus, location }
+      metadata,
+      location: location || undefined
     };
 
-    console.log('createTicket payload:', ticketData);
     const ticket = await Ticket.create(ticketData);
 
-    // Audit log
-    await AuditLog.create({ resourceType: 'ticket', resourceId: ticket._id, action: 'created', actor: req.user._id, payload: { ticket_code } });
+    await AuditLog.create({
+      action: 'ticket_created',
+      user_id: req.user._id,
+      resourceType: 'ticket',
+      resourceId: ticket._id,
+      metadata: { ticket_id: ticket_code }
+    });
 
-    // Emit socket event for real-time updates
     const io = getIO();
-    io && io.emit('ticket:created', { ticket: { id: ticket._id, ticket_code, title, priority, status: ticket.status } });
+    emitTicket(io, 'ticket:created', {
+      ticket: {
+        id: ticket._id,
+        ticket_id: ticket_code,
+        ticket_code,
+        title,
+        priority,
+        status: ticket.status,
+        department_id: ticket.department
+      }
+    });
 
-    // Queue AI processing without blocking the API response
+    await notifyDepartmentStaff(
+      ticket.department,
+      `New ticket ${ticket_code}: ${title}`,
+      'ticket:created',
+      { ticket_id: ticket._id }
+    );
+
     enqueueTicketAI(ticket._id.toString());
 
     return res.status(201).json({ success: true, data: ticket });
@@ -74,12 +126,7 @@ async function getAllTickets(req, res) {
     if (department) filter.department = department;
     if (q) filter.$text = { $search: q };
 
-    // RBAC: 
-    // - Resident: Handled by /my or 403
-    // - Super Admin: Unrestricted
-    // - Department Admin: Full department scope
-    // - Staff: Department scope + assigned tickets only
-    if (req.user.role === 'department_admin') {
+    if (req.user.role === 'admin') {
       if (req.user.department) filter.department = req.user.department;
     } else if (req.user.role === 'staff') {
       if (req.user.department) filter.department = req.user.department;
@@ -124,7 +171,6 @@ async function getTicketById(req, res) {
     const ticket = await Ticket.findById(req.params.id).populate('reporter assigned_to').lean();
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
-    // Access control
     if (req.user.role === 'resident') {
       if (!ticket.reporter || ticket.reporter._id.toString() !== req.user._id.toString()) {
         return res.status(403).json({ success: false, message: 'Access denied: Resident can only view own tickets' });
@@ -135,13 +181,12 @@ async function getTicketById(req, res) {
       if (!isAssigned || !inDepartment) {
         return res.status(403).json({ success: false, message: 'Access denied: Staff can only view assigned tickets in their department' });
       }
-    } else if (req.user.role === 'department_admin') {
+    } else if (req.user.role === 'admin') {
       const inDepartment = ticket.department && ticket.department.toString() === req.user.department?.toString();
       if (!inDepartment) {
         return res.status(403).json({ success: false, message: 'Access denied: Admin can only view tickets in their department' });
       }
     }
-    // super_admin has unrestricted access
 
     return res.json({ success: true, data: ticket });
   } catch (err) {
@@ -158,31 +203,81 @@ async function updateTicketStatus(req, res) {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
-    // Only staff or above can change status
     if (req.user.role === 'resident') return res.status(403).json({ success: false, message: 'Insufficient permissions' });
 
-    // Staff can only update their assigned tickets
     if (req.user.role === 'staff' && ticket.assigned_to?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Staff can only update status of assigned tickets' });
     }
 
-    // Dept Admin can update any ticket in their department
-    if (req.user.role === 'department_admin' && ticket.department?.toString() !== req.user.department?.toString()) {
+    if (req.user.role === 'admin' && ticket.department?.toString() !== req.user.department?.toString()) {
       return res.status(403).json({ success: false, message: 'Admin can only update tickets in their department' });
     }
 
     ticket.status = status;
     await ticket.save();
 
-    await AuditLog.create({ resourceType: 'ticket', resourceId: ticket._id, action: 'status_changed', actor: req.user._id, payload: { status } });
+    await AuditLog.create({
+      action: 'status_changed',
+      user_id: req.user._id,
+      resourceType: 'ticket',
+      resourceId: ticket._id,
+      metadata: { status }
+    });
 
     const io = getIO();
-    io && io.emit('ticket:statusChanged', { ticketId: ticket._id, status });
+    emitTicket(io, 'ticket:updated', { ticketId: ticket._id, status, ticket: ticket.toObject?.() || ticket });
+
+    if (ticket.reporter) {
+      await notifyUser(
+        ticket.reporter,
+        `Ticket ${ticket.ticket_code} is now ${status.replace(/_/g, ' ')}`,
+        'ticket:updated',
+        { ticket_id: ticket._id }
+      );
+    }
 
     return res.json({ success: true, data: ticket });
   } catch (err) {
     console.error('updateTicketStatus error', err);
     return res.status(500).json({ success: false, message: 'Failed to update status' });
+  }
+}
+
+async function escalateTicket(req, res) {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
+
+    if (!['staff', 'admin', 'super_admin'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Insufficient permissions' });
+    }
+
+    if (req.user.role === 'staff' && ticket.assigned_to?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not assigned to this ticket' });
+    }
+
+    if (req.user.role === 'admin' && ticket.department?.toString() !== req.user.department?.toString()) {
+      return res.status(403).json({ success: false, message: 'Wrong department' });
+    }
+
+    ticket.status = 'escalated';
+    await ticket.save();
+
+    await AuditLog.create({
+      action: 'escalated',
+      user_id: req.user._id,
+      resourceType: 'ticket',
+      resourceId: ticket._id,
+      metadata: {}
+    });
+
+    const io = getIO();
+    emitTicket(io, 'ticket:updated', { ticketId: ticket._id, status: 'escalated' });
+
+    return res.json({ success: true, data: ticket });
+  } catch (err) {
+    console.error('escalateTicket error', err);
+    return res.status(500).json({ success: false, message: 'Escalation failed' });
   }
 }
 
@@ -194,13 +289,7 @@ async function assignTicketToStaff(req, res) {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
-    // permission: department_admin / super_admin only
-    if (!['department_admin', 'super_admin'].includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: 'Only administrators can assign tickets' });
-    }
-
-    // Dept Admin can only assign tickets in their department
-    if (req.user.role === 'department_admin' && ticket.department?.toString() !== req.user.department?.toString()) {
+    if (req.user.role === 'admin' && ticket.department?.toString() !== req.user.department?.toString()) {
       return res.status(403).json({ success: false, message: 'Admin can only assign tickets in their department' });
     }
 
@@ -208,10 +297,23 @@ async function assignTicketToStaff(req, res) {
     ticket.status = 'assigned';
     await ticket.save();
 
-    await AuditLog.create({ resourceType: 'ticket', resourceId: ticket._id, action: 'assigned', actor: req.user._id, payload: { assigneeId } });
+    await AuditLog.create({
+      action: 'assigned',
+      user_id: req.user._id,
+      resourceType: 'ticket',
+      resourceId: ticket._id,
+      metadata: { assigneeId }
+    });
 
     const io = getIO();
-    io && io.emit('ticket:assigned', { ticketId: ticket._id, assigneeId });
+    emitTicket(io, 'ticket:assigned', { ticketId: ticket._id, assigneeId });
+
+    await notifyUser(
+      assigneeId,
+      `You were assigned ticket ${ticket.ticket_code}`,
+      'ticket:assigned',
+      { ticket_id: ticket._id }
+    );
 
     return res.json({ success: true, data: ticket });
   } catch (err) {
@@ -222,22 +324,37 @@ async function assignTicketToStaff(req, res) {
 
 async function addTicketComment(req, res) {
   try {
-    const { body } = req.body;
-    if (!body) return res.status(400).json({ success: false, message: 'Missing body' });
+    const message = req.body.message || req.body.body;
+    if (!message) return res.status(400).json({ success: false, message: 'Missing message' });
+
+    const visibility = req.body.visibility === 'internal' && ['staff', 'admin', 'super_admin'].includes(req.user.role)
+      ? 'internal'
+      : 'public';
 
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
-    // Residents may only comment on their ticket or public
     if (req.user.role === 'resident' && ticket.reporter && ticket.reporter.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    const comment = await TicketComment.create({ ticket: ticket._id, author: req.user._id, body, public: true });
-    await AuditLog.create({ resourceType: 'ticket', resourceId: ticket._id, action: 'comment_added', actor: req.user._id, payload: { commentId: comment._id } });
+    const comment = await TicketComment.create({
+      ticket_id: ticket._id,
+      user_id: req.user._id,
+      message,
+      visibility
+    });
+
+    await AuditLog.create({
+      action: 'comment_added',
+      user_id: req.user._id,
+      resourceType: 'ticket',
+      resourceId: ticket._id,
+      metadata: { commentId: comment._id, visibility }
+    });
 
     const io = getIO();
-    io && io.emit('ticket:commentAdded', { ticketId: ticket._id, comment: { id: comment._id, body } });
+    emitTicket(io, 'ticket:updated', { ticketId: ticket._id, comment: { id: comment._id, message, visibility } });
 
     return res.status(201).json({ success: true, data: comment });
   } catch (err) {
@@ -249,8 +366,19 @@ async function addTicketComment(req, res) {
 async function getTicketTimeline(req, res) {
   try {
     const ticketId = req.params.id;
-    const comments = await TicketComment.find({ ticket: ticketId }).sort({ createdAt: 1 }).lean();
-    const audits = await AuditLog.find({ resourceType: 'ticket', resourceId: ticketId }).sort({ createdAt: 1 }).lean();
+    const ticket = await Ticket.findById(ticketId).lean();
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
+
+    const commentFilter = { ticket_id: ticketId };
+    if (req.user.role === 'resident') {
+      commentFilter.visibility = 'public';
+    }
+
+    const [comments, audits] = await Promise.all([
+      TicketComment.find(commentFilter).sort({ createdAt: 1 }).populate('user_id', 'name email role').lean(),
+      AuditLog.find({ resourceType: 'ticket', resourceId: ticketId }).sort({ createdAt: 1 }).lean()
+    ]);
+
     return res.json({ success: true, data: { comments, audits } });
   } catch (err) {
     console.error('getTicketTimeline error', err);
@@ -264,6 +392,7 @@ module.exports = {
   getMyTickets,
   getTicketById,
   updateTicketStatus,
+  escalateTicket,
   assignTicketToStaff,
   addTicketComment,
   getTicketTimeline

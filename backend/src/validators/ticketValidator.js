@@ -8,6 +8,7 @@ const createTicketValidators = [
   body('description').isString().isLength({ min: 20 }).withMessage('Description must be at least 20 characters'),
   body('priority').optional().isIn(validPriorities).withMessage('Invalid priority'),
   body('department').optional().custom(value => mongoose.Types.ObjectId.isValid(value)).withMessage('Invalid department id'),
+  body('department_id').optional().custom(value => mongoose.Types.ObjectId.isValid(value)).withMessage('Invalid department_id'),
   body('location').optional().custom(loc => {
     if (typeof loc !== 'object') throw new Error('Location must be an object');
     if (!('lat' in loc) || !('lng' in loc)) throw new Error('Location must include lat and lng');

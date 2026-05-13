@@ -3,17 +3,24 @@ import { clearAccessToken, getAccessToken, setAccessToken } from '../utils/sessi
 import { login as loginRequest, logout as logoutRequest, me as meRequest, register as registerRequest, refreshSession } from '../api/auth';
 
 function extractToken(payload) {
-  return payload?.accessToken || payload?.data?.accessToken || null;
+  return payload?.accessToken || payload?.token || payload?.data?.accessToken || null;
 }
 
 function normalizeProfile(profile) {
   if (!profile) return null;
+  const name = profile.name || profile.full_name;
   return {
     id: profile.id || profile._id,
     email: profile.email,
-    full_name: profile.full_name,
-    role: profile.role,
+    name,
+    full_name: name,
+    role: profile.role === 'department_admin' ? 'admin' : profile.role,
     department: profile.department,
+    department_id: profile.department_id ?? profile.department?.id ?? profile.department,
+    staff_id: profile.staff_id,
+    profile_photo: profile.profile_photo,
+    two_factor_verified: profile.two_factor_verified,
+    ip_restriction_simulated: profile.ip_restriction_simulated,
     metadata: profile.metadata || {}
   };
 }

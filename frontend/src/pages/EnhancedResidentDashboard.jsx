@@ -74,7 +74,7 @@ export function EnhancedResidentDashboard() {
   return (
     <AnimatedPage className="space-y-8 pb-12">
       <SectionHeader
-        eyebrow={`Welcome back, ${profile?.full_name?.split(' ')[0] || 'Resident'}`}
+        eyebrow={`Welcome back, ${profile?.name?.split(' ')[0] || profile?.full_name?.split(' ')[0] || 'Resident'}`}
         title="Your Civic Dashboard"
         description="Monitor your reported issues and track city-wide progress in real time."
         action={

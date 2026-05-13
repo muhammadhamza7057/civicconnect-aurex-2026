@@ -101,11 +101,11 @@ async function processTicketAI({ ticketId }) {
     await ticket.save();
 
     await AuditLog.create({
+      action: 'ai_processed',
+      user_id: ticket.reporter,
       resourceType: 'ticket',
       resourceId: ticket._id,
-      action: 'ai_processed',
-      actor: ticket.reporter,
-      payload: {
+      metadata: {
         ai_category: ticket.ai_category,
         ai_priority: ticket.ai_priority,
         is_emergency: ticket.is_emergency,
@@ -124,11 +124,11 @@ async function processTicketAI({ ticketId }) {
   } catch (error) {
     errorLog('processTicketAI failed', error && error.message ? error.message : error);
     await AuditLog.create({
+      action: 'ai_failed',
+      user_id: ticket.reporter,
       resourceType: 'ticket',
       resourceId: ticket._id,
-      action: 'ai_failed',
-      actor: ticket.reporter,
-      payload: { message: error.message }
+      metadata: { message: error.message }
     }).catch(() => {});
   }
 }

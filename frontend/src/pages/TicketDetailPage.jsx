@@ -45,7 +45,7 @@ export function TicketDetailPage() {
     };
   }, [id]);
 
-  const canManage = useMemo(() => ['staff', 'department_admin', 'super_admin'].includes(profile?.role), [profile]);
+  const canManage = useMemo(() => ['staff', 'admin', 'super_admin'].includes(profile?.role), [profile]);
 
   const onComment = async values => {
     await toast.promise(addTicketComment(id, values.body), {
@@ -94,7 +94,19 @@ export function TicketDetailPage() {
           <div className="cc-card p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Timeline</p>
             <div className="mt-4 space-y-4">
-              {timeline.audits?.length ? timeline.audits.map(item => (
+              {(timeline.comments || []).map(c => (
+                <div key={c._id} className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-success" />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                      Comment · {c.visibility || 'public'}
+                    </p>
+                    <p className="mt-1 font-semibold text-text">{c.message || c.body}</p>
+                    <p className="text-sm text-muted">{formatDateTime(c.createdAt)}</p>
+                  </div>
+                </div>
+              ))}
+              {(timeline.audits || []).map(item => (
                 <div key={item._id} className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
                   <span className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" />
                   <div>
@@ -102,7 +114,10 @@ export function TicketDetailPage() {
                     <p className="text-sm text-muted">{formatDateTime(item.createdAt)}</p>
                   </div>
                 </div>
-              )) : <p className="text-sm text-muted">No timeline data yet.</p>}
+              ))}
+              {!(timeline.comments?.length || timeline.audits?.length) ? (
+                <p className="text-sm text-muted">No timeline data yet.</p>
+              ) : null}
             </div>
           </div>
         </section>

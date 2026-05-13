@@ -1,10 +1,16 @@
 const roleRank = {
   resident: 1,
   staff: 2,
-  department_admin: 3,
+  admin: 3,
   super_admin: 4
 };
 
+/**
+ * Allow access if the user's rank is >= the minimum rank among allowed roles
+ * (higher roles inherit access to staff-level endpoints).
+ * Use the most privileged role in `allowedRoles` alone when the route must exclude lower roles
+ * (e.g. only ['admin'] so min rank = 3 excludes staff).
+ */
 function authorizeRoles(allowedRoles = []) {
   if (!Array.isArray(allowedRoles)) allowedRoles = [allowedRoles];
 
@@ -16,12 +22,13 @@ function authorizeRoles(allowedRoles = []) {
 
       const userRole = req.user.role;
       const userRank = roleRank[userRole] || 0;
+      const allowedRanks = allowedRoles.map(r => roleRank[r] || 0).filter(Boolean);
+      if (!allowedRanks.length) {
+        return res.status(500).json({ error: { code: 'server_error', message: 'Invalid role configuration' } });
+      }
 
-      const allowedRanks = allowedRoles.map(r => roleRank[r] || 0);
-      const maxAllowedRank = allowedRanks.length ? Math.max(...allowedRanks) : 0;
-
-      // Enforce hierarchy: a user with higher rank can access lower-rank endpoints
-      if (userRank >= maxAllowedRank) return next();
+      const minRequiredRank = Math.min(...allowedRanks);
+      if (userRank >= minRequiredRank) return next();
 
       return res.status(403).json({ error: { code: 'forbidden', message: 'Insufficient permissions' } });
     } catch (err) {

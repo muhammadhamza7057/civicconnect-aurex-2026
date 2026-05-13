@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, AlertCircle, CheckCircle2, Building2, IdCard } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { listDepartments } from '../api/departments';
 
 function routeByRole(role) {
   if (role === 'resident') return '/resident';
@@ -15,16 +16,36 @@ function routeByRole(role) {
 export function EnhancedRegisterPage() {
   const navigate = useNavigate();
   const registerUser = useAuthStore(state => state.register);
-  const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm();
+  const [departments, setDepartments] = useState([]);
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: { role: 'resident' }
+  });
 
   const password = watch('password');
+  const role = watch('role');
+
+  useEffect(() => {
+    listDepartments()
+      .then(d => setDepartments(Array.isArray(d) ? d : []))
+      .catch(() => setDepartments([]));
+  }, []);
 
   const onSubmit = async values => {
     if (values.password !== values.confirmPassword) {
       return toast.error('Passwords do not match');
     }
 
-    const profile = await toast.promise(registerUser(values), {
+    const payload = {
+      email: values.email,
+      password: values.password,
+      name: values.name,
+      role: values.role,
+      department_id:
+        ['staff', 'admin'].includes(values.role) && values.department_id ? values.department_id : undefined,
+      staff_id: values.role === 'staff' && values.staff_id ? values.staff_id.trim() : undefined
+    };
+
+    const profile = await toast.promise(registerUser(payload), {
       loading: 'Creating your account...',
       success: 'Welcome to CivicConnect!',
       error: err => err.message || 'Unable to register'
@@ -37,11 +58,10 @@ export function EnhancedRegisterPage() {
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-primary">Create account</p>
         <h2 className="mt-3 text-4xl font-black tracking-tight text-text">Join CivicConnect</h2>
-        <p className="mt-2 text-sm text-muted">Get started in less than 2 minutes. Free account, always.</p>
+        <p className="mt-2 text-sm text-muted">Select your role for the demo. Staff and admins must belong to a department.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* FULL NAME FIELD */}
         <div>
           <label className="text-sm font-semibold text-text">Full name</label>
           <div className="relative mt-2">
@@ -49,18 +69,74 @@ export function EnhancedRegisterPage() {
             <input
               placeholder="Your full name"
               className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-text outline-none transition focus:border-primary focus:bg-white/10"
-              {...register('full_name', { required: 'Full name is required' })}
+              {...register('name', { required: 'Name is required' })}
             />
           </div>
-          {errors.full_name && (
+          {errors.name && (
             <div className="mt-2 flex items-center gap-2 text-sm text-danger">
               <AlertCircle size={16} strokeWidth={2} />
-              {errors.full_name.message}
+              {errors.name.message}
             </div>
           )}
         </div>
 
-        {/* EMAIL FIELD */}
+        <div>
+          <label className="text-sm font-semibold text-text">Role</label>
+          <select
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none"
+            {...register('role', { required: true })}
+          >
+            <option value="resident">Resident</option>
+            <option value="staff">Department staff</option>
+            <option value="admin">Department admin</option>
+            <option value="super_admin">Super admin</option>
+          </select>
+        </div>
+
+        {['staff', 'admin'].includes(role) ? (
+          <div>
+            <label className="text-sm font-semibold text-text flex items-center gap-2">
+              <Building2 size={16} /> Department
+            </label>
+            <select
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none"
+              {...register('department_id', { required: 'Department is required for this role' })}
+            >
+              <option value="">Select department</option>
+              {departments.map(d => (
+                <option key={d._id} value={d._id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+            {errors.department_id && (
+              <div className="mt-2 flex items-center gap-2 text-sm text-danger">
+                <AlertCircle size={16} strokeWidth={2} />
+                {errors.department_id.message}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {role === 'staff' ? (
+          <div>
+            <label className="text-sm font-semibold text-text flex items-center gap-2">
+              <IdCard size={16} /> Staff ID
+            </label>
+            <input
+              placeholder="e.g. STAFF-PARKS-014"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none"
+              {...register('staff_id', { required: 'Staff ID is required' })}
+            />
+            {errors.staff_id && (
+              <div className="mt-2 flex items-center gap-2 text-sm text-danger">
+                <AlertCircle size={16} strokeWidth={2} />
+                {errors.staff_id.message}
+              </div>
+            )}
+          </div>
+        ) : null}
+
         <div>
           <label className="text-sm font-semibold text-text">Email</label>
           <div className="relative mt-2">
@@ -80,7 +156,6 @@ export function EnhancedRegisterPage() {
           )}
         </div>
 
-        {/* PASSWORD FIELD */}
         <div>
           <label className="text-sm font-semibold text-text">Password</label>
           <div className="relative mt-2">
@@ -89,9 +164,9 @@ export function EnhancedRegisterPage() {
               type="password"
               placeholder="••••••••"
               className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-text outline-none transition focus:border-primary focus:bg-white/10"
-              {...register('password', { 
-                required: 'Password is required', 
-                minLength: { value: 8, message: 'Minimum 8 characters' } 
+              {...register('password', {
+                required: 'Password is required',
+                minLength: { value: 8, message: 'Minimum 8 characters' }
               })}
             />
           </div>
@@ -104,12 +179,11 @@ export function EnhancedRegisterPage() {
           {password && password.length >= 8 && (
             <div className="mt-2 flex items-center gap-2 text-sm text-success">
               <CheckCircle2 size={16} strokeWidth={2} />
-              Password is strong
+              Password meets minimum length
             </div>
           )}
         </div>
 
-        {/* CONFIRM PASSWORD FIELD */}
         <div>
           <label className="text-sm font-semibold text-text">Confirm password</label>
           <div className="relative mt-2">
@@ -129,7 +203,6 @@ export function EnhancedRegisterPage() {
           )}
         </div>
 
-        {/* SUBMIT BUTTON */}
         <button
           disabled={isSubmitting}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95 disabled:opacity-50"
@@ -139,25 +212,6 @@ export function EnhancedRegisterPage() {
         </button>
       </form>
 
-      {/* BENEFITS */}
-      <div className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted">What you get</p>
-        <div className="space-y-2">
-          {[
-            'Real-time complaint tracking',
-            'AI-powered issue analysis',
-            'Instant notifications',
-            'Staff collaboration tools'
-          ].map((benefit) => (
-            <div key={benefit} className="flex items-center gap-2 text-sm text-muted">
-              <CheckCircle2 size={14} className="text-success" strokeWidth={2} />
-              {benefit}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* LOGIN LINK */}
       <p className="text-sm text-muted">
         Already have access?{' '}
         <Link to="/login" className="font-semibold text-primary transition hover:text-primary/80">
