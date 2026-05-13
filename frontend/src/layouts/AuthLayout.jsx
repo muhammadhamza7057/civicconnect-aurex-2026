@@ -1,12 +1,20 @@
 import React from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 export function AuthLayout() {
+  const location = useLocation();
+  const isRegister = location.pathname === '/register';
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(var(--primary),0.10),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(var(--success),0.08),transparent_22%),linear-gradient(180deg,rgb(var(--bg))_0%,rgb(var(--bg-soft))_100%)] px-4 py-6 lg:px-8">
-      <div className="mx-auto grid min-h-[calc(100vh-48px)] max-w-7xl overflow-hidden rounded-[2rem] border border-border/70 bg-white/90 shadow-2xl shadow-slate-900/10 backdrop-blur-xl lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative flex flex-col justify-between overflow-hidden px-6 py-10 lg:px-12">
+      <div
+        className={[
+          'mx-auto grid min-h-[calc(100vh-48px)] max-w-7xl overflow-hidden rounded-[2rem] border border-border/70 bg-white/90 shadow-2xl shadow-slate-900/10 backdrop-blur-xl',
+          isRegister ? '2xl:grid-cols-[0.85fr_1.15fr]' : 'lg:grid-cols-[1.05fr_0.95fr]'
+        ].join(' ')}
+      >
+        <section className={["relative flex flex-col justify-between overflow-hidden px-6 py-10 lg:px-12", isRegister ? 'hidden 2xl:flex' : ''].join(' ')}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(var(--primary),0.22),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(var(--success),0.18),transparent_32%)]" />
           <div className="relative z-10">
             <Link
@@ -49,8 +57,8 @@ export function AuthLayout() {
             ))}
           </motion.div>
         </section>
-        <section className="flex items-start justify-center bg-[rgb(var(--bg))/0.45] px-4 py-10 lg:py-12">
-          <div className="w-full max-w-xl">
+        <section className="flex items-start justify-center bg-[rgb(var(--bg))/0.45] px-4 py-10 lg:px-6 lg:py-12">
+          <div className={['w-full', isRegister ? 'max-w-4xl' : 'max-w-xl'].join(' ')}>
             <Outlet />
           </div>
         </section>

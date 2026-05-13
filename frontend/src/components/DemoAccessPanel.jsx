@@ -48,6 +48,12 @@ function buildLoginUrl(account) {
   return `/login?${params.toString()}`;
 }
 
+function formatCredentials(account) {
+  return account.staffId
+    ? `Email: ${account.email}\nStaff ID: ${account.staffId}\nPassword: ${account.password}`
+    : `Email: ${account.email}\nPassword: ${account.password}`;
+}
+
 async function copyText(text) {
   if (typeof navigator === 'undefined' || !navigator.clipboard) return false;
   await navigator.clipboard.writeText(text);
@@ -72,7 +78,49 @@ export function DemoAccessPanel({ compact = false, onUseDemo }) {
       </div>
 
       <div className="pt-5">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+        <div className="rounded-2xl border border-border/60 bg-bg/65 p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Quick demo credentials</p>
+            <button
+              type="button"
+              onClick={async () => {
+                const compiled = demoAccounts
+                  .map(a => `${a.label}\n${formatCredentials(a)}`)
+                  .join('\n\n');
+                const ok = await copyText(compiled).catch(() => false);
+                if (!ok) {
+                  toast.error('Copy failed. Please copy manually.');
+                  return;
+                }
+                toast.success('All demo credentials copied');
+              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-surface px-3 py-2 text-xs font-semibold text-text transition hover:bg-surface-2"
+            >
+              <ClipboardCopy size={14} />
+              Copy all
+            </button>
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-2">
+            {demoAccounts.map(account => (
+              <div key={`quick-${account.role}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/60 bg-white/80 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-text">{account.label}</p>
+                  <p className="text-xs text-muted">{account.email} | {account.staffId ? `${account.staffId} | ` : ''}{account.password}</p>
+                </div>
+                <Link
+                  to={buildLoginUrl(account)}
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-95"
+                >
+                  Open
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-4">
         {demoAccounts.map(account => {
           const Icon = account.icon;
           return (
@@ -121,9 +169,7 @@ export function DemoAccessPanel({ compact = false, onUseDemo }) {
                 <button
                   type="button"
                   onClick={async () => {
-                    const secret = account.staffId
-                      ? `Email: ${account.email}\nStaff ID: ${account.staffId}\nPassword: ${account.password}`
-                      : `Email: ${account.email}\nPassword: ${account.password}`;
+                    const secret = formatCredentials(account);
                     const ok = await copyText(secret).catch(() => false);
                     if (!ok) {
                       toast.error('Copy failed. Please copy manually.');
