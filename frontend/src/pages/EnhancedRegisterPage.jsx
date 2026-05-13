@@ -14,6 +14,9 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  Clock3,
+  Bell,
+  MapPinned,
   Home,
   ClipboardList,
   UsersRound,
@@ -158,6 +161,62 @@ export function EnhancedRegisterPage() {
 
       <div className="border-b border-border/60 bg-surface/70 px-6 py-6 sm:px-8">
         <DemoAccessPanel />
+      </div>
+
+      <div className="border-b border-border/60 bg-bg/60 px-6 py-6 sm:px-8">
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-[24px] border border-border/60 bg-surface/90 p-5 shadow-soft">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Track complaint demo</p>
+            <h3 className="mt-2 text-xl font-bold tracking-tight text-text">See the resident flow from submission to resolution</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Judges can open the resident demo and review the full complaint journey: create a ticket, watch the status timeline, receive notifications, and check AI notes.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {[
+                { icon: ClipboardList, title: 'Submit complaint', text: 'Create a ticket with title, description, and attachments.' },
+                { icon: Clock3, title: 'Track status', text: 'Watch Submitted → Under review → In progress → Resolved.' },
+                { icon: Bell, title: 'Live alerts', text: 'Get socket updates when staff changes the status.' },
+                { icon: MapPinned, title: 'Location aware', text: 'Pin where the issue happened for faster response.' }
+              ].map(item => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.title} className="rounded-2xl border border-border/60 bg-bg/70 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <Icon size={18} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-text">{item.title}</p>
+                        <p className="mt-1 text-sm leading-6 text-muted">{item.text}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-primary/20 bg-gradient-to-br from-primary/10 via-surface to-success/10 p-5 shadow-soft">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">What judges can test</p>
+            <h3 className="mt-2 text-xl font-bold tracking-tight text-text">One-click demo journey</h3>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
+              <li className="flex gap-2"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-success" /> Resident submits a complaint and tracks it live.</li>
+              <li className="flex gap-2"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-success" /> Staff updates the ticket and the resident sees it instantly.</li>
+              <li className="flex gap-2"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-success" /> Admin views analytics, SLA pressure, and exports.
+              </li>
+            </ul>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+                <Link to="/login?demo=resident&autologin=1" className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-glow transition hover:opacity-95">
+                  Open resident demo <ArrowRight size={16} />
+                </Link>
+                <Link to="#who-its-for" className="inline-flex items-center gap-2 rounded-2xl border border-border/70 bg-surface px-4 py-3 text-sm font-semibold text-text transition hover:bg-surface-2">
+                  See all roles
+                </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-0" noValidate aria-label="Register">

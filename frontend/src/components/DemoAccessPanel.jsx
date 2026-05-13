@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardCopy, LogIn, Shield, User, Users, Crown } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { ClipboardCopy, LogIn, Shield, User, Users, Crown, ArrowRight, Sparkles } from 'lucide-react';
 
 export const demoAccounts = [
   {
@@ -55,61 +56,67 @@ async function copyText(text) {
 
 export function DemoAccessPanel({ compact = false, onUseDemo }) {
   return (
-    <section className={compact ? 'space-y-3' : 'cc-card space-y-5 p-6 lg:p-8'}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Demo access</p>
-          <h3 className="mt-2 text-xl font-bold tracking-tight text-text">Judge-ready accounts</h3>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Open the login page with a prefilled demo role, or copy credentials directly into the form.
+    <section className={compact ? 'space-y-3' : 'rounded-[28px] border border-border/60 bg-white/85 p-5 shadow-soft backdrop-blur-xl lg:p-7'}>
+      <div className="flex flex-col gap-4 border-b border-border/60 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-primary">
+            <Sparkles size={12} />
+            Demo access
+          </div>
+          <h3 className="mt-3 text-2xl font-black tracking-tight text-text">Judge-ready accounts</h3>
+          <p className="mt-2 text-sm leading-6 text-muted sm:text-[15px]">
+            Open the login page with a prefilled demo role, copy the credentials, or launch the right dashboard in one click.
           </p>
         </div>
-        {compact ? null : <LogIn size={20} className="text-primary" />}
+        {compact ? null : <LogIn size={22} className="text-primary" />}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="pt-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         {demoAccounts.map(account => {
           const Icon = account.icon;
           return (
-            <div key={account.role} className="rounded-3xl border border-border/60 bg-surface/80 p-4 shadow-soft">
+            <article key={account.role} className="min-w-0 rounded-[24px] border border-border/60 bg-gradient-to-b from-white to-surface/70 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10">
                     <Icon size={18} />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-text">{account.label}</p>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted">{account.role.replace('_', ' ')}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">{account.role.replace('_', ' ')}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2 rounded-2xl border border-border/50 bg-bg/60 p-3 text-sm">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Email</p>
-                  <p className="mt-1 break-all text-text">{account.email}</p>
-                </div>
-                {account.staffId ? (
+              <div className="mt-4 space-y-2 rounded-2xl border border-border/60 bg-bg/60 p-3 text-sm">
+                <div className="grid gap-2">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Staff ID</p>
-                    <p className="mt-1 text-text">{account.staffId}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Email</p>
+                    <p className="mt-1 break-words font-medium text-text">{account.email}</p>
                   </div>
-                ) : null}
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Password</p>
-                  <p className="mt-1 text-text">{account.password}</p>
+                  {account.staffId ? (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Staff ID</p>
+                      <p className="mt-1 font-medium text-text">{account.staffId}</p>
+                    </div>
+                  ) : null}
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Password</p>
+                    <p className="mt-1 font-medium text-text">{account.password}</p>
+                  </div>
                 </div>
               </div>
 
               <p className="mt-3 text-sm leading-6 text-muted">{account.note}</p>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 grid gap-2">
                 <Link
                   to={buildLoginUrl(account)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:opacity-95"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:opacity-95"
                 >
                   <LogIn size={16} />
-                  Open dashboard
+                  Launch dashboard
                 </Link>
                 <button
                   type="button"
@@ -118,9 +125,13 @@ export function DemoAccessPanel({ compact = false, onUseDemo }) {
                       ? `Email: ${account.email}\nStaff ID: ${account.staffId}\nPassword: ${account.password}`
                       : `Email: ${account.email}\nPassword: ${account.password}`;
                     const ok = await copyText(secret).catch(() => false);
-                    if (!ok) return;
+                    if (!ok) {
+                      toast.error('Copy failed. Please copy manually.');
+                      return;
+                    }
+                    toast.success(`${account.label} credentials copied`);
                   }}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-border/70 bg-surface px-4 py-2.5 text-sm font-semibold text-text transition hover:bg-surface-2"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border/70 bg-surface px-4 py-2.5 text-sm font-semibold text-text transition hover:bg-surface-2"
                 >
                   <ClipboardCopy size={16} />
                   Copy credentials
@@ -129,16 +140,17 @@ export function DemoAccessPanel({ compact = false, onUseDemo }) {
                   <button
                     type="button"
                     onClick={() => onUseDemo(account)}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-border/70 bg-surface px-4 py-2.5 text-sm font-semibold text-text transition hover:bg-surface-2"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border/70 bg-surface px-4 py-2.5 text-sm font-semibold text-text transition hover:bg-surface-2"
                   >
                     <ClipboardCopy size={16} />
                     Fill form
                   </button>
                 ) : null}
               </div>
-            </div>
+            </article>
           );
         })}
+        </div>
       </div>
     </section>
   );
