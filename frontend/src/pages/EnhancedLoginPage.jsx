@@ -5,6 +5,13 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { demoAccounts } from '../components/DemoAccessPanel';
+
+function routeByRole(role) {
+  if (role === 'resident') return '/resident';
+  if (role === 'staff') return '/staff';
+  return '/admin';
+}
 
 const inputBase =
   'w-full rounded-2xl border-2 border-border bg-surface py-3.5 pl-12 text-base text-text placeholder:text-muted/90 shadow-sm transition focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60';
@@ -15,14 +22,36 @@ const labelClass = 'text-[15px] font-semibold leading-snug text-text';
 
 export function EnhancedLoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const login = useAuthStore(state => state.login);
   const [showPassword, setShowPassword] = useState(false);
-  const { register, handleSubmit, setValue, getValues, formState: { errors, isSubmitting } } = useForm({
+  const demoRole = searchParams.get('demo');
+  const autoLogin = searchParams.get('autologin') === '1';
+  const demoAccount = demoAccounts.find(account => account.role === demoRole);
+  const { register, handleSubmit, setValue, trigger, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
-      identifier: '',
-      password: ''
+      identifier: demoAccount?.staffId || demoAccount?.email || '',
+      password: demoAccount?.password || ''
     }
   });
+
+  useEffect(() => {
+    if (!demoAccount) return;
+    setValue('identifier', demoAccount.staffId || demoAccount.email, { shouldValidate: true });
+    setValue('password', demoAccount.password, { shouldValidate: true });
+  }, [demoAccount, setValue]);
+
+  useEffect(() => {
+    if (!demoAccount || !autoLogin) return;
+    const timer = window.setTimeout(() => {
+      trigger().then(valid => {
+        if (!valid) return;
+        handleSubmit(onSubmit)();
+      });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoAccount, autoLogin]);
 
   const onSubmit = async values => {
     const raw = values.identifier.trim();

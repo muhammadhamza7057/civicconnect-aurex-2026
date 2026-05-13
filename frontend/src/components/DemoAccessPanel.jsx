@@ -43,8 +43,14 @@ export const demoAccounts = [
 ];
 
 function buildLoginUrl(account) {
-  const params = new URLSearchParams({ demo: account.role });
+  const params = new URLSearchParams({ demo: account.role, autologin: '1' });
   return `/login?${params.toString()}`;
+}
+
+async function copyText(text) {
+  if (typeof navigator === 'undefined' || !navigator.clipboard) return false;
+  await navigator.clipboard.writeText(text);
+  return true;
 }
 
 export function DemoAccessPanel({ compact = false, onUseDemo }) {
@@ -103,8 +109,22 @@ export function DemoAccessPanel({ compact = false, onUseDemo }) {
                   className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:opacity-95"
                 >
                   <LogIn size={16} />
-                  Open login
+                  Open dashboard
                 </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const secret = account.staffId
+                      ? `Email: ${account.email}\nStaff ID: ${account.staffId}\nPassword: ${account.password}`
+                      : `Email: ${account.email}\nPassword: ${account.password}`;
+                    const ok = await copyText(secret).catch(() => false);
+                    if (!ok) return;
+                  }}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-border/70 bg-surface px-4 py-2.5 text-sm font-semibold text-text transition hover:bg-surface-2"
+                >
+                  <ClipboardCopy size={16} />
+                  Copy credentials
+                </button>
                 {onUseDemo ? (
                   <button
                     type="button"
