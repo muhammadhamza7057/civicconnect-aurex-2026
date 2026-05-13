@@ -8,8 +8,8 @@ export function EmptyState({ title, description, action }) {
       <div className="h-40 w-40">
         <Lottie animationData={emptyAnimation} loop />
       </div>
-      <h3 className="mt-4 text-xl font-semibold">{title}</h3>
-      <p className="mt-2 max-w-md text-sm text-muted">{description}</p>
+      <h3 className="mt-4 text-xl font-semibold text-text">{title}</h3>
+      <p className="mt-2 max-w-md text-sm leading-6 text-muted">{description}</p>
       {action ? <div className="mt-6">{action}</div> : null}
     </div>
   );

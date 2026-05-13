@@ -23,6 +23,7 @@ import { getTickets, updateTicketStatus } from '../api/tickets';
 import { connectSocket } from '../socket/client';
 import { useAuthStore } from '../store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 const columns = ['submitted', 'under_review', 'in_progress', 'resolved'];
 
@@ -114,6 +115,21 @@ export function StaffDashboard() {
         <MetricCard label="SLA Breaches" value={stats.overdue} icon="completed" accent="warning" />
       </div>
 
+      <div className="cc-card border-primary/15 p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Staff action center</p>
+            <h3 className="mt-1 text-lg font-bold text-text">One-click triage, better visibility</h3>
+            <p className="mt-1 text-sm leading-6 text-muted">Use the board to advance tickets, check SLA pressure, and keep the workload balanced.</p>
+          </div>
+          <button className="rounded-2xl border border-border/60 bg-surface px-4 py-3 text-sm font-semibold text-text transition hover:bg-surface-2">
+            AI Briefing
+          </button>
+        </div>
+      </div>
+
+      <DemoAccessPanel compact />
+
       <AnimatePresence mode="wait">
         {viewMode === 'map' ? (
           <motion.div
@@ -145,15 +161,15 @@ export function StaffDashboard() {
             {columns.map((status, idx) => (
               <div key={status} className="flex flex-col gap-4">
                 <div className="flex items-center justify-between px-2">
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted">
                     {status.replace('_', ' ')}
                   </h3>
-                  <span className="text-[10px] font-black bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-gray-400">
+                  <span className="rounded-full border border-border/60 bg-surface/80 px-2 py-0.5 text-[10px] font-black text-muted">
                     {grouped[status].length}
                   </span>
                 </div>
                 
-                <div className="flex-1 space-y-4 min-h-[500px] rounded-[32px] bg-black/20 border border-white/5 p-3">
+                <div className="min-h-[500px] flex-1 space-y-4 rounded-[28px] border border-border/60 bg-surface/70 p-3 shadow-soft">
                   {grouped[status].length > 0 ? grouped[status].map((ticket) => (
                     <div key={ticket._id} className="group relative">
                       <EnhancedTicketCard 
@@ -161,12 +177,12 @@ export function StaffDashboard() {
                         compact 
                         isAssigned={ticket.assigned_to?._id === profile._id || ticket.assigned_to === profile._id}
                       />
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         {columns.filter(c => c !== status).slice(0, 2).map(next => (
                           <button 
                             key={next}
                             onClick={() => changeStatus(ticket._id, next)}
-                            className="p-1.5 rounded-lg bg-black/80 border border-white/10 text-[10px] font-bold text-gray-400 hover:text-white hover:border-primary/50 transition-all"
+                              className="rounded-lg border border-border/60 bg-bg/90 p-1.5 text-[10px] font-bold text-muted transition-all hover:border-primary/50 hover:text-text"
                             title={`Move to ${next}`}
                           >
                             <ChevronRight size={14} />
@@ -176,8 +192,8 @@ export function StaffDashboard() {
                     </div>
                   )) : (
                     <div className="h-40 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-[24px]">
-                      <p className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">Empty</p>
-                    </div>
+                    <div className="flex h-40 flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-border/60 bg-bg/30">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Empty</p>
                   )}
                 </div>
               </div>

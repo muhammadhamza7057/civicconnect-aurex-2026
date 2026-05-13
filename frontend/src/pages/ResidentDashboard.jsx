@@ -9,6 +9,7 @@ import { AnimatedPage } from '../components/AnimatedPage';
 import { getMyTickets, getTicketById } from '../api/tickets';
 import { useAuthStore } from '../store/authStore';
 import { connectSocket, getSocket } from '../socket/client';
+import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 export function ResidentDashboard() {
   const profile = useAuthStore(state => state.profile);
@@ -72,14 +73,29 @@ export function ResidentDashboard() {
         eyebrow={`Hello ${profile?.full_name?.split(' ')[0] || 'Resident'}`}
         title="Your civic requests at a glance"
         description="Track every complaint, SLA timer, and AI insight in real time."
-        action={<Link to="/tickets/new" className="rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-glow">Create ticket</Link>}
+        action={<Link to="/tickets/new" className="rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-glow">Report Issue</Link>}
       />
+
+      <div className="cc-card border-primary/20 bg-gradient-to-r from-primary/10 via-surface to-success/10 p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Resident workflow</p>
+            <h3 className="mt-1 text-lg font-bold text-text">Quick actions for a demo run</h3>
+            <p className="mt-1 text-sm leading-6 text-muted">Submit a ticket, watch its timeline update, and review AI guidance without hunting through the UI.</p>
+          </div>
+          <Link to="/tickets/new" className="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-glow">
+            Create ticket
+          </Link>
+        </div>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard label="Open tickets" value={counts.open} accent="primary" hint="Requests still in motion" />
         <StatCard label="Resolved" value={counts.resolved} accent="success" hint="Closed or completed issues" />
         <StatCard label="Urgent issues" value={counts.urgent} accent="warning" hint="Need immediate civic attention" />
       </div>
+
+      <DemoAccessPanel compact />
 
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
         <section className="space-y-4">

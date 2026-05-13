@@ -28,13 +28,13 @@ export function MetricCard({ label, value, icon = 'tickets', trend, accent = 'pr
     <motion.div whileHover={{ y: -4 }} className="cc-card p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm text-muted font-medium">{label}</p>
+          <p className="text-sm font-medium text-muted">{label}</p>
           <div className="mt-3 text-4xl font-black tracking-tight text-text">
             {isNumeric ? <CountUp end={numeric} duration={1.8} /> : value}
           </div>
-          {trend && <p className="mt-2 text-xs text-success">{trend}</p>}
+          {trend && <p className="mt-2 text-xs font-medium text-success">{trend}</p>}
         </div>
-        <div className={`rounded-2xl bg-gradient-to-br p-3 ${accentMap[accent] || accentMap.primary}`}>
+        <div className={`rounded-2xl border border-border/50 bg-gradient-to-br p-3 ${accentMap[accent] || accentMap.primary}`}>
           <Icon size={24} strokeWidth={1.5} />
         </div>
       </div>

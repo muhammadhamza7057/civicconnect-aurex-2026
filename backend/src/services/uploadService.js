@@ -18,11 +18,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 8 * 1024 * 1024 }, // 8MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB per file
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|pdf|doc|docx/;
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!allowed.test(ext)) return cb(new Error('Unsupported file type'));
+    // Accept only jpg/jpeg, png, pdf
+    const allowedExt = /\.(jpe?g|png|pdf)$/i;
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    if (!allowedExt.test(ext)) return cb(new Error('Unsupported file type. Allowed: jpg, png, pdf'));
     cb(null, true);
   }
 });

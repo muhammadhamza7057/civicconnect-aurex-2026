@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import CountUp from 'react-countup';
 import { Footer } from '../components/Footer';
+import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 const WHO_ROLES = [
   {
@@ -136,6 +137,25 @@ export function EnhancedLandingPage() {
                 </Link>
               </motion.div>
             </div>
+            <div className="mx-auto mt-8 max-w-5xl rounded-[28px] border border-border/60 bg-surface/75 p-4 shadow-soft backdrop-blur-xl">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="text-left">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Quick demo access</p>
+                  <p className="mt-1 text-sm leading-6 text-text">Open the judge-ready logins and jump straight into the resident, staff, or admin dashboards.</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {['resident', 'staff', 'admin', 'super_admin'].map(role => (
+                    <Link
+                      key={role}
+                      to={`/login?demo=${role}`}
+                      className="rounded-full border border-border/60 bg-bg/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-text transition hover:border-primary/40 hover:bg-surface-2"
+                    >
+                      {role.replace('_', ' ')}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
             <p className="text-sm text-gray-500">
               <a href="#who-its-for" className="text-gray-300 underline-offset-4 hover:text-white hover:underline">
                 Who can use CivicConnect? See the four roles before you register.
@@ -164,7 +184,7 @@ export function EnhancedLandingPage() {
 
       <section
         id="who-its-for"
-        className="relative border-y border-white/10 bg-zinc-950 py-24"
+        className="relative border-y border-border/60 bg-gradient-to-b from-surface/90 to-bg/90 py-24"
         aria-labelledby="who-its-for-heading"
       >
         <div className="container mx-auto px-6">
@@ -179,7 +199,7 @@ export function EnhancedLandingPage() {
             <h2 id="who-its-for-heading" className="mt-4 text-3xl font-black tracking-tight text-white md:text-5xl">
               Four roles. Pick the one that fits you.
             </h2>
-            <p className="mt-4 text-lg text-gray-400">
+            <p className="mt-4 text-lg text-muted">
               When you create an account, you choose a role so we can show the right dashboard and permissions. Here is a plain-language overview.
             </p>
           </motion.div>
@@ -206,19 +226,20 @@ export function EnhancedLandingPage() {
             })}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="mt-12 flex justify-center"
-          >
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mt-12 flex justify-center">
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:border-primary/40 hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-2xl border border-border/70 bg-surface px-6 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:bg-surface-2"
             >
               Go to register <ArrowRight size={18} />
             </Link>
           </motion.div>
+        </div>
+      </section>
+
+      <section className="px-6 py-24">
+        <div className="mx-auto max-w-7xl">
+          <DemoAccessPanel />
         </div>
       </section>
 

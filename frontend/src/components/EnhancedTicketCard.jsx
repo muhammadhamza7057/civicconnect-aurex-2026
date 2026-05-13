@@ -17,13 +17,13 @@ export function EnhancedTicketCard({ ticket, compact = false, onClick }) {
       onClick={onClick}
       className="cc-card group cursor-pointer overflow-hidden p-0 transition-all"
     >
-      <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent p-6">
+      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-r from-white/5 to-transparent p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{ticket.ticket_code}</p>
             <h3 className="mt-2 line-clamp-2 text-lg font-bold tracking-tight text-text">{ticket.title}</h3>
           </div>
-          <div className="flex flex-shrink-0 items-center gap-2 rounded-full bg-black/30 px-3 py-1">
+          <div className="flex flex-shrink-0 items-center gap-2 rounded-full border border-border/60 bg-bg/60 px-3 py-1">
             <SlaIcon size={14} className={slaColor} strokeWidth={2} />
             <span className={`text-xs font-bold ${slaColor}`}>{formatRelativeTime(ticket.sla_due_at)}</span>
           </div>
@@ -46,7 +46,7 @@ export function EnhancedTicketCard({ ticket, compact = false, onClick }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+      <div className="flex items-center justify-between border-t border-border/60 px-6 py-4">
         <p className="text-xs text-muted">Updated {formatDateTime(ticket.updatedAt)}</p>
         <Link
           to={`/tickets/${ticket._id}`}

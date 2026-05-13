@@ -15,12 +15,12 @@ export function StatCard({ label, value, suffix = '', hint, accent = 'primary' }
 
   return (
     <motion.div whileHover={{ y: -2 }} className="cc-card p-5">
-      <div className={`rounded-2xl bg-gradient-to-br p-4 ${accentMap[accent] || accentMap.primary}`}>
-        <p className="text-sm text-muted">{label}</p>
+      <div className={`rounded-2xl border border-border/50 bg-gradient-to-br p-4 ${accentMap[accent] || accentMap.primary}`}>
+        <p className="text-sm font-medium text-muted">{label}</p>
         <div className="mt-2 text-3xl font-black tracking-tight text-text">
           {isNumeric ? <CountUp end={numeric} duration={1.6} /> : value}{suffix}
         </div>
-        {hint ? <p className="mt-2 text-xs text-muted">{hint}</p> : null}
+        {hint ? <p className="mt-2 text-xs leading-5 text-muted">{hint}</p> : null}
       </div>
     </motion.div>
   );

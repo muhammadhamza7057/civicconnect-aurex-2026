@@ -111,8 +111,24 @@ export function CreateTicketPage() {
 
         <div className="rounded-3xl border border-dashed border-white/15 bg-white/5 p-5">
           <label className="text-sm font-semibold text-text">Attachments</label>
-          <input type="file" multiple className="mt-3 block w-full text-sm text-muted file:mr-4 file:rounded-2xl file:border-0 file:bg-primary file:px-4 file:py-2 file:font-semibold file:text-white" {...register('attachments')} />
-          <p className="mt-3 text-sm text-muted">Optional. Add photos for faster AI triage and staff response.</p>
+          <input
+            type="file"
+            multiple
+            accept=".jpg,.jpeg,.png,.pdf"
+            className="mt-3 block w-full text-sm text-muted file:mr-4 file:rounded-2xl file:border-0 file:bg-primary file:px-4 file:py-2 file:font-semibold file:text-white"
+            {...register('attachments')}
+            onChange={e => {
+              const files = Array.from(e.target.files || []);
+              const maxSize = 10 * 1024 * 1024; // 10MB
+              const bad = files.find(f => f.size > maxSize);
+              if (bad) {
+                toast.error(`File ${bad.name} exceeds 10MB limit`);
+                // clear the file input
+                e.target.value = '';
+              }
+            }}
+          />
+          <p className="mt-3 text-sm text-muted">Optional. Add photos or PDFs (max 10MB each) for AI triage and staff response.</p>
         </div>
 
         <div className="flex flex-wrap justify-end gap-3">

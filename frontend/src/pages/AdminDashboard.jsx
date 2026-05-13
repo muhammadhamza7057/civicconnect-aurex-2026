@@ -15,6 +15,7 @@ import { LiveCityMap } from '../components/LiveCityMap';
 import { client as axiosInstance } from '../api/client';
 import { getTickets } from '../api/tickets';
 import { useAuthStore } from '../store/authStore';
+import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 export function AdminDashboard() {
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -102,6 +103,25 @@ export function AdminDashboard() {
         }
       />
 
+      <div className="cc-card border-primary/15 p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Executive control</p>
+            <h3 className="mt-1 text-lg font-bold text-text">Clean analytics for demo mode</h3>
+            <p className="mt-1 text-sm leading-6 text-muted">Switch views, refresh data, and export without visual clutter.</p>
+          </div>
+          <button
+            type="button"
+            onClick={fetchData}
+            className="rounded-2xl border border-border/60 bg-surface px-4 py-3 text-sm font-semibold text-text transition hover:bg-surface-2"
+          >
+            Refresh data
+          </button>
+        </div>
+      </div>
+
+      <DemoAccessPanel compact />
+
       <AnimatePresence mode="wait">
         {loading ? (
           <motion.div 
@@ -109,10 +129,10 @@ export function AdminDashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="h-[600px] flex flex-col items-center justify-center space-y-4"
+            className="flex h-[600px] flex-col items-center justify-center space-y-4 rounded-[28px] border border-border/60 bg-surface/60"
           >
-            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Aggregating Data...</p>
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Aggregating data…</p>
           </motion.div>
         ) : (
           <motion.div
@@ -129,20 +149,20 @@ export function AdminDashboard() {
               />
             ) : (
               <div className="space-y-6">
-                <div className="cc-card p-4 flex items-center justify-between border-primary/20">
+                <div className="cc-card flex items-center justify-between border-primary/20 p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                       <Activity size={20} />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-gray-500">Live Incident Map</p>
-                      <p className="text-sm font-bold text-white">Real-time status of all reported issues</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-muted">Live incident map</p>
+                      <p className="text-sm font-bold text-text">Real-time status of all reported issues</p>
                     </div>
                   </div>
                   <div className="flex gap-4">
                     <div className="text-right">
-                      <p className="text-[10px] font-black uppercase text-gray-600">Active Incidents</p>
-                      <p className="text-lg font-black text-white">{tickets.length}</p>
+                      <p className="text-[10px] font-black uppercase text-muted">Active incidents</p>
+                      <p className="text-lg font-black text-text">{tickets.length}</p>
                     </div>
                   </div>
                 </div>
@@ -155,19 +175,19 @@ export function AdminDashboard() {
 
       {profile.role === 'super_admin' && auditLogs.length > 0 ? (
         <div className="cc-card p-6">
-          <p className="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Audit trail</p>
+          <p className="mb-4 text-xs font-black uppercase tracking-widest text-muted">Audit trail</p>
           <div className="overflow-x-auto text-sm">
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                <tr className="text-[10px] font-black uppercase tracking-widest text-muted">
                   <th className="pb-2">Action</th>
                   <th className="pb-2">When</th>
                 </tr>
               </thead>
               <tbody>
                 {auditLogs.slice(0, 15).map((row, i) => (
-                  <tr key={i} className="border-t border-white/5 text-gray-300">
-                    <td className="py-2 font-semibold text-white">{row.action}</td>
+                  <tr key={i} className="border-t border-border/60 text-text">
+                    <td className="py-2 font-semibold text-text">{row.action}</td>
                     <td className="py-2">{row.timestamp ? new Date(row.timestamp).toLocaleString() : '—'}</td>
                   </tr>
                 ))}

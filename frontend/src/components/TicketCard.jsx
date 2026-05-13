@@ -29,7 +29,7 @@ export function TicketCard({ ticket, compact = false }) {
       ) : null}
       <div className="flex items-center justify-between gap-3 text-xs text-muted">
         <span>Updated {formatDateTime(ticket.updatedAt)}</span>
-        <Link to={`/tickets/${ticket._id}`} className="rounded-full border border-white/10 px-3 py-1.5 font-semibold text-text transition hover:bg-white/5">
+        <Link to={`/tickets/${ticket._id}`} className="rounded-full border border-border/60 bg-surface px-3 py-1.5 font-semibold text-text transition hover:bg-surface-2">
           View details
         </Link>
       </div>

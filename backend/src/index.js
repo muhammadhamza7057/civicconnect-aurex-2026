@@ -1,6 +1,7 @@
 // Load and validate environment (auto-creates .env if missing)
 require('./config/env');
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const http = require('http');
@@ -61,6 +62,9 @@ app.options('*', cors(corsOptions)); // Handle preflight requests
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestLogger);
+
+// Serve uploaded files (local fallback storage)
+app.use('/uploads', express.static(path.join(__dirname, '..', '..', 'uploads')));
 
 // health endpoint (checks DB and AI readiness)
 app.get('/api/v1/health', async (req, res) => {

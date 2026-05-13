@@ -87,11 +87,11 @@ export function AppShell({ children }) {
   }, [profile]);
 
   return (
-    <div className="relative min-h-screen bg-[#050505] text-white selection:bg-primary selection:text-white">
+    <div className="relative min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(var(--primary),0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(var(--success),0.10),transparent_26%),linear-gradient(180deg,rgb(var(--bg))_0%,rgb(var(--bg-soft))_100%)] text-text selection:bg-primary selection:text-white">
       {/* Background Decor */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-success/5 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/10 blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-success/10 blur-[120px]" />
       </div>
 
       <div className="relative z-10 flex min-h-screen max-w-[1600px] mx-auto">
@@ -110,17 +110,17 @@ export function AppShell({ children }) {
 
         {/* Sidebar */}
         <aside className={classNames(
-          'fixed inset-y-0 left-0 z-50 w-72 transform border-r border-white/5 bg-black/40 backdrop-blur-2xl px-6 py-8 transition-transform duration-300 lg:sticky lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 w-72 transform border-r border-border/60 bg-surface/75 backdrop-blur-2xl px-6 py-8 transition-transform duration-300 lg:sticky lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}>
           <div className="flex items-center justify-between mb-10">
             <Link to="/dashboard" className="flex items-center gap-3 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-lg font-black text-white shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-cyan-500 text-lg font-black text-white shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
                 C
               </div>
               <div>
                 <p className="font-black tracking-tight text-lg">CivicConnect</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Smart City OS</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Smart City OS</p>
               </div>
             </Link>
             <button className="lg:hidden p-2 rounded-lg hover:bg-white/5" onClick={() => setSidebarOpen(false)}>
@@ -136,10 +136,10 @@ export function AppShell({ children }) {
                   key={link.to} 
                   to={link.to} 
                   className={({ isActive }) => classNames(
-                    'flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-200 group',
+                    'flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 group',
                     isActive 
-                      ? 'bg-primary/10 text-primary border border-primary/20' 
-                      : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
+                      ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm' 
+                      : 'text-muted hover:bg-surface-2/80 hover:text-text border border-transparent'
                   )}
                 >
                   <Icon size={20} className={classNames('transition-transform group-hover:scale-110')} />
@@ -150,7 +150,7 @@ export function AppShell({ children }) {
           </nav>
 
           <div className="mt-10 pt-10 border-t border-white/5">
-            <div className="rounded-3xl bg-white/5 p-5 border border-white/5">
+              <div className="rounded-3xl border border-border/60 bg-surface-2/80 p-5 shadow-soft">
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4">Account</p>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center font-bold">
@@ -158,10 +158,10 @@ export function AppShell({ children }) {
                 </div>
                 <div className="min-w-0">
                   <p className="font-bold truncate text-sm">{profile?.name || profile?.full_name}</p>
-                  <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
+                  <p className="text-xs text-muted truncate">{profile?.email}</p>
                 </div>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-primary">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 {role.replace('_', ' ')}
               </div>
@@ -170,7 +170,7 @@ export function AppShell({ children }) {
 
           <div className="absolute bottom-8 left-6 right-6 space-y-2">
             <button 
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/5 px-4 py-3.5 text-sm font-bold text-gray-400 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 transition-all"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-surface/70 px-4 py-3.5 text-sm font-semibold text-muted transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
               onClick={logout}
             >
               <LogOut size={18} />
@@ -181,7 +181,7 @@ export function AppShell({ children }) {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-40 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 lg:px-10">
+          <header className="sticky top-0 z-40 border-b border-border/60 bg-bg/70 px-6 py-4 backdrop-blur-xl lg:px-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button 
@@ -191,24 +191,24 @@ export function AppShell({ children }) {
                   <Menu size={20} />
                 </button>
                 <div className="hidden sm:block">
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-0.5">
+                  <div className="mb-0.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted">
                     <span>CivicConnect</span>
                     <span className="opacity-30">/</span>
                     <span className="text-primary">{location.pathname.replace('/', '') || 'dashboard'}</span>
                   </div>
-                  <h2 className="text-xl font-black">{(profile?.name || profile?.full_name || 'User')?.split(' ')[0]}&apos;s Workspace</h2>
+                  <h2 className="text-xl font-black text-text">{(profile?.name || profile?.full_name || 'User')?.split(' ')[0]}&apos;s Workspace</h2>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <button className="p-2.5 rounded-xl border border-white/10 hover:bg-white/5 transition-colors relative">
+                <button className="relative rounded-xl border border-border/60 p-2.5 transition-colors hover:bg-surface-2/80">
                   <Bell size={20} />
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-black" />
+                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-bg bg-primary" />
                 </button>
                 <ThemeToggle />
                 <button 
                   onClick={() => navigate('/tickets/new')}
-                  className="hidden md:flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
+                  className="hidden items-center gap-2 rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition-all hover:opacity-95 md:flex"
                 >
                   <PlusCircle size={18} />
                   New Request
@@ -217,7 +217,7 @@ export function AppShell({ children }) {
             </div>
           </header>
 
-          <main className="flex-1 p-6 lg:p-10 relative">
+          <main className="relative flex-1 p-6 lg:p-10">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}

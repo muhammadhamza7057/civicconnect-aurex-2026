@@ -12,6 +12,7 @@ import { getMyTickets, getTicketById } from '../api/tickets';
 import { useAuthStore } from '../store/authStore';
 import { connectSocket } from '../socket/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DemoAccessPanel } from '../components/DemoAccessPanel';
 
 export function EnhancedResidentDashboard() {
   const profile = useAuthStore(state => state.profile);
@@ -104,6 +105,8 @@ export function EnhancedResidentDashboard() {
         <MetricCard label="Urgent Alerts" value={counts.urgent} icon="alerts" accent="danger" />
       </div>
 
+      <DemoAccessPanel compact />
+
       {/* MAIN CONTENT AREA */}
       <div className="grid gap-8 lg:grid-cols-12">
         <div className="lg:col-span-8 space-y-6">
@@ -169,7 +172,7 @@ export function EnhancedResidentDashboard() {
                 key={selectedTicket._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="cc-card p-8 sticky top-24 border-primary/20"
+                className="cc-card sticky top-24 border-primary/20 p-8"
               >
                 <div className="flex justify-between items-start mb-6">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/10 px-3 py-1 rounded-full">
@@ -185,12 +188,12 @@ export function EnhancedResidentDashboard() {
                 <h3 className="text-2xl font-black text-white mb-4 leading-tight">{selectedTicket.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed mb-8 line-clamp-4">{selectedTicket.description}</p>
 
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                <div className="mb-8 grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl border border-border/60 bg-surface/80 p-4">
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Priority</p>
                     <p className="font-bold text-white text-sm">{selectedTicket.priority}</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <div className="rounded-2xl border border-border/60 bg-surface/80 p-4">
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">SLA</p>
                     <p className={`font-bold text-sm ${
                       selectedTicket.metadata?.slaStatus === 'red' ? 'text-red-500' : 'text-emerald-500'
@@ -201,7 +204,7 @@ export function EnhancedResidentDashboard() {
                 </div>
 
                 {selectedTicket.ai_summary && (
-                  <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 mb-8 relative overflow-hidden group">
+                  <div className="relative mb-8 overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 group">
                     <div className="absolute top-0 right-0 p-2 text-primary opacity-20 group-hover:opacity-100 transition-opacity">
                       <TrendingUp size={16} />
                     </div>
@@ -212,7 +215,7 @@ export function EnhancedResidentDashboard() {
 
                 <Link
                   to={`/tickets/${selectedTicket._id}`}
-                  className="flex w-full items-center justify-center gap-3 py-4 bg-white text-black rounded-2xl font-black hover:bg-gray-100 transition-all shadow-lg"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-4 font-semibold text-white shadow-glow transition-all hover:opacity-95"
                 >
                   Explore Details
                   <ArrowRight size={18} />
