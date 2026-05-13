@@ -33,6 +33,8 @@ if (!fs.existsSync(envPath)) {
   lines.push(`JWT_SECRET=${jwtSecret}`);
   lines.push(`JWT_REFRESH_SECRET=${jwtRefresh}`);
   lines.push(`GEMINI_API_KEY=${gemini}`);
+  lines.push(`FRONTEND_URL=https://civicconnect-aurex-2026.vercel.app`);
+  lines.push(`CORS_ORIGINS=`);
   lines.push(`CLOUDINARY_CLOUD_NAME=`);
   lines.push(`CLOUDINARY_API_KEY=`);
   lines.push(`CLOUDINARY_API_SECRET=`);

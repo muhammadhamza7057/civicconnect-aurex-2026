@@ -8,7 +8,6 @@ import {
   Mail,
   Lock,
   ArrowRight,
-  AlertCircle,
   CheckCircle2,
   Building2,
   IdCard,
@@ -228,7 +227,7 @@ export function EnhancedRegisterPage() {
         </div>
 
         <AnimatePresence initial={false}>
-          {['staff', 'admin'].includes(role) || role === 'staff' ? (
+          {['staff', 'admin'].includes(role) ? (
             <motion.div
               key="dept-block"
               initial={{ height: 0, opacity: 0 }}
@@ -239,7 +238,7 @@ export function EnhancedRegisterPage() {
             >
               <div className="px-6 py-6 sm:px-8">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted">For your role</p>
-                <h2 className="mt-1 text-lg font-bold text-text">Department {['staff', 'admin'].includes(role) ? '' : ''}</h2>
+                <h2 className="mt-1 text-lg font-bold text-text">Where you work</h2>
 
                 {['staff', 'admin'].includes(role) ? (
                   <div className="mt-4">
@@ -309,7 +308,7 @@ export function EnhancedRegisterPage() {
           <h2 className="mt-1 text-lg font-bold text-text">Password</h2>
           <p className="mt-1 text-sm text-muted">At least 8 characters.</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="relative">
+            <div>
               <label htmlFor="reg-pass" className={label}>
                 Password
               </label>
@@ -375,8 +374,8 @@ export function EnhancedRegisterPage() {
         <div className="flex flex-col gap-3 border-t border-border/60 bg-surface-2/20 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p className="text-sm text-muted">
             Wrong role?{' '}
-            <Link to="/" className="font-semibold text-primary hover:underline">
-              Read who each role is for
+            <Link to="/#who-its-for" className="font-semibold text-primary hover:underline">
+              See roles on the home page
             </Link>
           </p>
           <button

@@ -1,7 +1,11 @@
 const mongoose = require('mongoose');
-let MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/civicconnect';
-if (String(MONGO_URI).includes('<') || String(MONGO_URI).includes('MONGO_USER')) {
-  console.warn('MONGO_URI looks like a placeholder; falling back to local MongoDB for demo');
+let MONGO_URI = process.env.MONGO_URI || '';
+if (!MONGO_URI || String(MONGO_URI).includes('<') || String(MONGO_URI).includes('MONGO_USER')) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('MONGO_URI is not configured for production. Set MONGO_URI to your MongoDB Atlas connection string.');
+    process.exit(1);
+  }
+  console.warn('MONGO_URI looks like a placeholder or is missing; falling back to local MongoDB for development/demo');
   MONGO_URI = 'mongodb://localhost:27017/civicconnect';
 }
 
@@ -24,25 +28,26 @@ async function connect(retries = 3, backoffMs = 2000) {
       console.error(`MongoDB connection attempt ${attempt} failed`);
       if (attempt === retries) {
         console.error('Exceeded MongoDB connection retries.');
-        // In non-production, start an in-memory MongoDB for demo/testing
-        if (process.env.NODE_ENV !== 'production') {
-          try {
-            console.warn('Attempting to start in-memory MongoDB for development/demo.');
-            const { MongoMemoryServer } = require('mongodb-memory-server');
-            memoryServer = await MongoMemoryServer.create();
-            MONGO_URI = memoryServer.getUri();
-            console.log('In-memory MongoDB running at', MONGO_URI);
-            await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-            isConnected = true;
-            console.log('MongoDB connected to in-memory server');
-            return mongoose;
-          } catch (memErr) {
-            console.error('Failed to start in-memory MongoDB:', memErr && memErr.message ? memErr.message : memErr);
-            process.exit(1);
-          }
-        }
         console.error(err.message);
-        process.exit(1);
+        if (process.env.NODE_ENV === 'production') {
+          console.error('Unable to connect to MongoDB in production — exiting.');
+          process.exit(1);
+        }
+        // In development, attempt in-memory server as a last resort
+        try {
+          console.warn('Attempting to start in-memory MongoDB for development/demo.');
+          const { MongoMemoryServer } = require('mongodb-memory-server');
+          memoryServer = await MongoMemoryServer.create();
+          MONGO_URI = memoryServer.getUri();
+          console.log('In-memory MongoDB running at', MONGO_URI);
+          await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+          isConnected = true;
+          console.log('MongoDB connected to in-memory server');
+          return mongoose;
+        } catch (memErr) {
+          console.error('Failed to start in-memory MongoDB:', memErr && memErr.message ? memErr.message : memErr);
+          process.exit(1);
+        }
       }
       await new Promise(r => setTimeout(r, backoffMs * attempt));
     }

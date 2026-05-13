@@ -10,7 +10,8 @@ export function getSocket() {
       transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 8,
-      reconnectionDelay: 1000
+      reconnectionDelay: 1000,
+      withCredentials: true
     });
   }
   return socket;

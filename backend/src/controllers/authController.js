@@ -127,7 +127,7 @@ exports.register = async (req, res) => {
 
     res.cookie('cc_rt', refreshToken, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       secure: process.env.NODE_ENV === 'production',
       maxAge: REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000
     });
@@ -166,7 +166,7 @@ exports.login = async (req, res) => {
 
     res.cookie('cc_rt', refreshToken, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       secure: process.env.NODE_ENV === 'production',
       maxAge: REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000
     });
@@ -195,7 +195,7 @@ exports.refresh = async (req, res) => {
 
     res.cookie('cc_rt', newToken, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       secure: process.env.NODE_ENV === 'production',
       maxAge: REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000
     });

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { clearAccessToken, getAccessToken, setAccessToken } from '../utils/session';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+// Prefer VITE_API_URL (production), fall back to older VITE_API_BASE_URL, then localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 const RAW_BASE_URL = API_BASE_URL.replace(/\/api\/v1$/, '');
 
 const client = axios.create({

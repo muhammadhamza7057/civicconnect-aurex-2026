@@ -1,16 +1,60 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   ArrowRight, 
   Zap, 
   Clock,
-  Bell
+  Bell,
+  Home,
+  ClipboardList,
+  UsersRound,
+  Crown
 } from 'lucide-react';
 import CountUp from 'react-countup';
 import { Footer } from '../components/Footer';
 
+const WHO_ROLES = [
+  {
+    id: 'resident',
+    icon: Home,
+    title: 'Resident',
+    description:
+      'Report issues, track tickets, and get updates about your neighborhood. This is the default for most people who live or work in the city.'
+  },
+  {
+    id: 'staff',
+    icon: ClipboardList,
+    title: 'Staff',
+    description:
+      'Department workers who pick up tickets, update status, and keep SLAs on track. You will choose your department and use a staff ID when you sign up.'
+  },
+  {
+    id: 'admin',
+    icon: UsersRound,
+    title: 'Admin',
+    description:
+      'Leads who oversee teams, departments, and day-to-day operations. Same extra fields as staff so we can place you in the right org chart.'
+  },
+  {
+    id: 'super_admin',
+    icon: Crown,
+    title: 'Super admin',
+    description:
+      'Platform-wide access for IT or city leadership who configure the system, audit activity, and manage sensitive settings.'
+  }
+];
+
 export function EnhancedLandingPage() {
+  useEffect(() => {
+    if (window.location.hash !== '#who-its-for') return;
+    const el = document.getElementById('who-its-for');
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
+
   const stats = [
     { value: 10000, label: 'Issues Resolved', suffix: '+' },
     { value: 500, label: 'Active Staff', suffix: '+' },
@@ -92,6 +136,11 @@ export function EnhancedLandingPage() {
                 </Link>
               </motion.div>
             </div>
+            <p className="text-sm text-gray-500">
+              <a href="#who-its-for" className="text-gray-300 underline-offset-4 hover:text-white hover:underline">
+                Who can use CivicConnect? See the four roles before you register.
+              </a>
+            </p>
           </motion.div>
 
           <motion.div 
@@ -109,6 +158,66 @@ export function EnhancedLandingPage() {
                 <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mt-2">{stat.label}</div>
               </div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <section
+        id="who-its-for"
+        className="relative border-y border-white/10 bg-zinc-950 py-24"
+        aria-labelledby="who-its-for-heading"
+      >
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6 }}
+            className="mx-auto max-w-3xl text-center"
+          >
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Register with confidence</p>
+            <h2 id="who-its-for-heading" className="mt-4 text-3xl font-black tracking-tight text-white md:text-5xl">
+              Four roles. Pick the one that fits you.
+            </h2>
+            <p className="mt-4 text-lg text-gray-400">
+              When you create an account, you choose a role so we can show the right dashboard and permissions. Here is a plain-language overview.
+            </p>
+          </motion.div>
+
+          <div className="mx-auto mt-14 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {WHO_ROLES.map((r, idx) => {
+              const Icon = r.icon;
+              return (
+                <motion.article
+                  key={r.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.45, delay: idx * 0.05 }}
+                  className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-left backdrop-blur-sm"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <Icon className="h-5 w-5" aria-hidden />
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-white">{r.title}</h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-400">{r.description}</p>
+                </motion.article>
+              );
+            })}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-12 flex justify-center"
+          >
+            <Link
+              to="/register"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:border-primary/40 hover:bg-white/10"
+            >
+              Go to register <ArrowRight size={18} />
+            </Link>
           </motion.div>
         </div>
       </section>

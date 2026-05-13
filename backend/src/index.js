@@ -15,6 +15,9 @@ require('./jobs/aiWorker');
 
 const app = express();
 
+// Trust proxy (required for secure cookies behind proxies like Render/Vercel)
+app.set('trust proxy', true);
+
 // Security
 app.use(helmet());
 
@@ -32,6 +35,11 @@ const FRONTEND_URLS = [
 ].filter(Boolean);
 
 const uniqueOrigins = [...new Set(FRONTEND_URLS)];
+// ensure known deployed frontend is allowed if not explicitly set
+if (process.env.NODE_ENV === 'production' && !uniqueOrigins.length) {
+  uniqueOrigins.push('https://civicconnect-aurex-2026.vercel.app');
+}
+console.log('CORS allowed origins:', uniqueOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -42,7 +50,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   optionsSuccessStatus: 200
 };
 
@@ -71,6 +79,11 @@ app.get('/api/v1/health', async (req, res) => {
   }
 
   res.json({ status: 'OK', database: dbState, ai: aiStatus, sockets: (global.__io_initialized ? 'active' : 'inactive'), uptime: Math.floor(uptime) });
+});
+
+// Root health check for Render / root URL (prevents 404 on service root)
+app.get('/', (req, res) => {
+  return res.json({ success: true, message: 'CivicConnect API is running successfully 🚀' });
 });
 
 app.use('/api/v1', apiRouter);
