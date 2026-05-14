@@ -119,9 +119,6 @@ async function exportTicketsCsv(req, res) {
       if (!req.user.department) return res.status(400).json({ success: false, message: 'No department' });
       filter.department = req.user.department;
     }
-    if (req.user.role === 'staff') {
-      filter.assigned_to = req.user._id;
-    }
 
     const rows = await Ticket.find(filter).sort({ createdAt: -1 }).limit(2000).lean();
     const header = 'ticket_id,title,status,priority,department_id,sla_due_at,createdAt\n';

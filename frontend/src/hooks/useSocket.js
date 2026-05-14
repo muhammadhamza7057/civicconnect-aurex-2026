@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { connectSocket, disconnectSocket, getSocket } from '../socket/client';
+import { connectSocket, getSocket } from '../socket/client';
 import { toast } from 'react-hot-toast';
 
 export function useSocket(enabled, handlers = {}) {
@@ -8,6 +8,12 @@ export function useSocket(enabled, handlers = {}) {
 
     const socket = connectSocket();
     const bindings = Object.entries(handlers);
+    const handleConnect = () => {
+      if (handlers.onConnect) handlers.onConnect();
+    };
+    const handleDisconnect = () => {
+      if (handlers.onDisconnect) handlers.onDisconnect();
+    };
 
     bindings.forEach(([event, handler]) => {
       if (typeof handler === 'function') {
@@ -15,13 +21,9 @@ export function useSocket(enabled, handlers = {}) {
       }
     });
 
-    socket.on('connect', () => {
-      if (handlers.onConnect) handlers.onConnect();
-    });
+    socket.on('connect', handleConnect);
 
-    socket.on('disconnect', () => {
-      if (handlers.onDisconnect) handlers.onDisconnect();
-    });
+    socket.on('disconnect', handleDisconnect);
 
     socket.on('notification:new', payload => {
       toast(payload?.message || 'New notification received');
@@ -37,7 +39,8 @@ export function useSocket(enabled, handlers = {}) {
       if (handlers.onConnect) getSocket().off('connect', handlers.onConnect);
       if (handlers.onDisconnect) getSocket().off('disconnect', handlers.onDisconnect);
       if (handlers['notification:new']) getSocket().off('notification:new', handlers['notification:new']);
-      disconnectSocket();
+      getSocket().off('connect', handleConnect);
+      getSocket().off('disconnect', handleDisconnect);
     };
   }, [enabled, handlers]);
 }

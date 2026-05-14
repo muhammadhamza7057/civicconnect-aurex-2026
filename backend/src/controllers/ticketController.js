@@ -15,6 +15,38 @@ function emitTicket(io, event, payload) {
   if (event !== 'ticket:updated') {
     io && io.emit('ticket:updated', payload);
   }
+  const aliases = {
+    'ticket:created': 'ticket_created',
+    'ticket:updated': 'ticket_updated',
+    'ticket:assigned': 'ticket_assigned',
+    'ticket:statusChanged': 'ticket_updated',
+    'ticket:commentAdded': 'comment_added'
+  };
+  const alias = aliases[event];
+  if (alias) io && io.emit(alias, payload);
+}
+
+function getEntityId(value) {
+  if (!value) return null;
+  if (typeof value === 'object' && value._id) return value._id.toString();
+  return value.toString();
+}
+
+function canManageDepartmentTicket(user, ticket) {
+  if (!user || !ticket) return false;
+  if (user.role === 'super_admin') return true;
+  const ticketDepartmentId = getEntityId(ticket.department);
+  const userDepartmentId = getEntityId(user.department);
+  if (!ticketDepartmentId || !userDepartmentId) return false;
+  return ticketDepartmentId === userDepartmentId;
+}
+
+function ticketPopulation() {
+  return [
+    { path: 'reporter', select: 'name email role staff_id' },
+    { path: 'assigned_to', select: 'name email role staff_id' },
+    { path: 'department', select: 'name slug' }
+  ];
 }
 
 function parseLocation(raw) {
@@ -44,7 +76,14 @@ async function createTicket(req, res) {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+      const validationErrors = errors.array();
+      return res.status(400).json({
+        success: false,
+        message: validationErrors[0]?.msg || 'Please fill all required fields',
+        code: 'validation_failed',
+        details: validationErrors,
+        errors: validationErrors
+      });
     }
 
     const { title, description, priority = 'medium' } = req.body;
@@ -126,15 +165,12 @@ async function getAllTickets(req, res) {
     if (department) filter.department = department;
     if (q) filter.$text = { $search: q };
 
-    if (req.user.role === 'admin') {
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       if (req.user.department) filter.department = req.user.department;
-    } else if (req.user.role === 'staff') {
-      if (req.user.department) filter.department = req.user.department;
-      filter.assigned_to = req.user._id;
     }
 
     const [data, total] = await Promise.all([
-      Ticket.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(per_page)).lean(),
+      Ticket.find(filter).populate(ticketPopulation()).sort({ createdAt: -1 }).skip(skip).limit(Number(per_page)).lean(),
       Ticket.countDocuments(filter)
     ]);
 
@@ -155,7 +191,7 @@ async function getMyTickets(req, res) {
     if (q) filter.$text = { $search: q };
 
     const [data, total] = await Promise.all([
-      Ticket.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(per_page)).lean(),
+      Ticket.find(filter).populate(ticketPopulation()).sort({ createdAt: -1 }).skip(skip).limit(Number(per_page)).lean(),
       Ticket.countDocuments(filter)
     ]);
 
@@ -168,7 +204,7 @@ async function getMyTickets(req, res) {
 
 async function getTicketById(req, res) {
   try {
-    const ticket = await Ticket.findById(req.params.id).populate('reporter assigned_to').lean();
+    const ticket = await Ticket.findById(req.params.id).populate(ticketPopulation()).lean();
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
     if (req.user.role === 'resident') {
@@ -176,14 +212,11 @@ async function getTicketById(req, res) {
         return res.status(403).json({ success: false, message: 'Access denied: Resident can only view own tickets' });
       }
     } else if (req.user.role === 'staff') {
-      const isAssigned = ticket.assigned_to && ticket.assigned_to._id.toString() === req.user._id.toString();
-      const inDepartment = ticket.department && ticket.department.toString() === req.user.department?.toString();
-      if (!isAssigned || !inDepartment) {
-        return res.status(403).json({ success: false, message: 'Access denied: Staff can only view assigned tickets in their department' });
+      if (!canManageDepartmentTicket(req.user, ticket)) {
+        return res.status(403).json({ success: false, message: 'Access denied: Staff can only view tickets in their department' });
       }
     } else if (req.user.role === 'admin') {
-      const inDepartment = ticket.department && ticket.department.toString() === req.user.department?.toString();
-      if (!inDepartment) {
+      if (!canManageDepartmentTicket(req.user, ticket)) {
         return res.status(403).json({ success: false, message: 'Access denied: Admin can only view tickets in their department' });
       }
     }
@@ -205,11 +238,11 @@ async function updateTicketStatus(req, res) {
 
     if (req.user.role === 'resident') return res.status(403).json({ success: false, message: 'Insufficient permissions' });
 
-    if (req.user.role === 'staff' && ticket.assigned_to?.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Staff can only update status of assigned tickets' });
+    if (req.user.role === 'staff' && !canManageDepartmentTicket(req.user, ticket)) {
+      return res.status(403).json({ success: false, message: 'Staff can only update tickets in their department' });
     }
 
-    if (req.user.role === 'admin' && ticket.department?.toString() !== req.user.department?.toString()) {
+    if (req.user.role === 'admin' && !canManageDepartmentTicket(req.user, ticket)) {
       return res.status(403).json({ success: false, message: 'Admin can only update tickets in their department' });
     }
 
@@ -225,7 +258,7 @@ async function updateTicketStatus(req, res) {
     });
 
     const io = getIO();
-    emitTicket(io, 'ticket:updated', { ticketId: ticket._id, status, ticket: ticket.toObject?.() || ticket });
+    emitTicket(io, 'ticket:statusChanged', { ticketId: ticket._id, status, ticket: ticket.toObject?.() || ticket });
 
     if (ticket.reporter) {
       await notifyUser(
@@ -252,11 +285,11 @@ async function escalateTicket(req, res) {
       return res.status(403).json({ success: false, message: 'Insufficient permissions' });
     }
 
-    if (req.user.role === 'staff' && ticket.assigned_to?.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Not assigned to this ticket' });
+    if (req.user.role === 'staff' && !canManageDepartmentTicket(req.user, ticket)) {
+      return res.status(403).json({ success: false, message: 'Staff can only escalate tickets in their department' });
     }
 
-    if (req.user.role === 'admin' && ticket.department?.toString() !== req.user.department?.toString()) {
+    if (req.user.role === 'admin' && !canManageDepartmentTicket(req.user, ticket)) {
       return res.status(403).json({ success: false, message: 'Wrong department' });
     }
 
@@ -272,7 +305,7 @@ async function escalateTicket(req, res) {
     });
 
     const io = getIO();
-    emitTicket(io, 'ticket:updated', { ticketId: ticket._id, status: 'escalated' });
+    emitTicket(io, 'ticket:statusChanged', { ticketId: ticket._id, status: 'escalated', ticket: ticket.toObject?.() || ticket });
 
     return res.json({ success: true, data: ticket });
   } catch (err) {
@@ -289,8 +322,12 @@ async function assignTicketToStaff(req, res) {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
-    if (req.user.role === 'admin' && ticket.department?.toString() !== req.user.department?.toString()) {
-      return res.status(403).json({ success: false, message: 'Admin can only assign tickets in their department' });
+    if (!['staff', 'admin', 'super_admin'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Insufficient permissions' });
+    }
+
+    if (req.user.role !== 'super_admin' && !canManageDepartmentTicket(req.user, ticket)) {
+      return res.status(403).json({ success: false, message: 'Can only assign tickets in your department' });
     }
 
     ticket.assigned_to = assigneeId;
@@ -306,7 +343,7 @@ async function assignTicketToStaff(req, res) {
     });
 
     const io = getIO();
-    emitTicket(io, 'ticket:assigned', { ticketId: ticket._id, assigneeId });
+    emitTicket(io, 'ticket:assigned', { ticketId: ticket._id, assigneeId, ticket: ticket.toObject?.() || ticket });
 
     await notifyUser(
       assigneeId,
@@ -354,7 +391,25 @@ async function addTicketComment(req, res) {
     });
 
     const io = getIO();
-    emitTicket(io, 'ticket:updated', { ticketId: ticket._id, comment: { id: comment._id, message, visibility } });
+    emitTicket(io, 'ticket:commentAdded', { ticketId: ticket._id, comment: { id: comment._id, message, visibility }, ticket: ticket.toObject?.() || ticket });
+
+    if (visibility === 'public') {
+      if (req.user.role === 'resident') {
+        await notifyDepartmentStaff(
+          ticket.department,
+          `Resident replied on ticket ${ticket.ticket_code}`,
+          'ticket:comment',
+          { ticket_id: ticket._id, comment_id: comment._id }
+        );
+      } else if (ticket.reporter) {
+        await notifyUser(
+          ticket.reporter,
+          `Staff replied on ticket ${ticket.ticket_code}`,
+          'ticket:comment',
+          { ticket_id: ticket._id, comment_id: comment._id }
+        );
+      }
+    }
 
     return res.status(201).json({ success: true, data: comment });
   } catch (err) {
@@ -366,8 +421,18 @@ async function addTicketComment(req, res) {
 async function getTicketTimeline(req, res) {
   try {
     const ticketId = req.params.id;
-    const ticket = await Ticket.findById(ticketId).lean();
+    const ticket = await Ticket.findById(ticketId).populate(ticketPopulation()).lean();
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
+
+    if (req.user.role === 'resident') {
+      if (!ticket.reporter || getEntityId(ticket.reporter) !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    } else if (req.user.role === 'staff' || req.user.role === 'admin') {
+      if (!canManageDepartmentTicket(req.user, ticket)) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
 
     const commentFilter = { ticket_id: ticketId };
     if (req.user.role === 'resident') {

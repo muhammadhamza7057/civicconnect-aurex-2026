@@ -92,17 +92,19 @@ export function StaffDashboard() {
         title="Operations Board"
         description="Manage assigned tasks, monitor department workload, and respond to civic issues in real-time."
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <button 
               onClick={() => setViewMode(viewMode === 'kanban' ? 'map' : 'kanban')}
-              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-gray-300 hover:bg-white/10 transition-all"
+              className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base font-semibold sm:font-bold text-gray-300 hover:bg-white/10 transition-all"
             >
-              {viewMode === 'kanban' ? <MapIcon size={18} /> : <Layers size={18} />}
-              {viewMode === 'kanban' ? 'Live Map' : 'Kanban Board'}
+              {viewMode === 'kanban' ? <MapIcon size={16} className="sm:size-[18px]" /> : <Layers size={16} className="sm:size-[18px]" />}
+              <span className="hidden sm:inline">{viewMode === 'kanban' ? 'Live Map' : 'Kanban Board'}</span>
+              <span className="sm:hidden">{viewMode === 'kanban' ? 'Map' : 'Board'}</span>
             </button>
-            <button className="flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 font-black shadow-lg hover:bg-gray-100 transition-all">
-              <Sparkles size={18} />
-              AI Briefing
+            <button className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-white text-black px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-bold sm:font-black shadow-lg hover:bg-gray-100 transition-all">
+              <Sparkles size={16} className="sm:size-[18px]" />
+              <span className="hidden sm:inline">AI Briefing</span>
+              <span className="sm:hidden">AI</span>
             </button>
           </div>
         }

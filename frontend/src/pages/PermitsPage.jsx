@@ -60,7 +60,7 @@ export function PermitsPage() {
           <form className="space-y-4" onSubmit={handleSubmit(start)}>
             <div>
               <label className="text-sm font-semibold text-text">Permit type</label>
-              <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" {...register('permit_type')}>
+              <select className="relative z-10 mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" {...register('permit_type')}>
                 <option value="construction">Construction</option>
                 <option value="event">Special event</option>
                 <option value="vendor">Street vendor</option>
@@ -68,7 +68,7 @@ export function PermitsPage() {
             </div>
             <div>
               <label className="text-sm font-semibold text-text">Site address</label>
-              <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" {...register('address', { required: true })} />
+              <input className="relative z-10 mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" {...register('address', { required: true })} />
             </div>
             <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 font-bold text-white">
               Continue <ChevronRight size={18} />
@@ -80,7 +80,7 @@ export function PermitsPage() {
           <form className="space-y-4" onSubmit={handleSubmit(saveStep2)}>
             <div>
               <label className="text-sm font-semibold text-text">Work scope</label>
-              <textarea rows={5} className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" {...register('scope', { required: true })} />
+              <textarea rows={5} className="relative z-10 mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" {...register('scope', { required: true })} />
             </div>
             <p className="text-xs text-muted">Upload supporting documents from your device (simulated in this build).</p>
             <button type="submit" className="w-full rounded-2xl bg-primary py-3 font-bold text-white">

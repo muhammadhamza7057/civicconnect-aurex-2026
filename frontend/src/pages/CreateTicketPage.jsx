@@ -12,6 +12,7 @@ export function CreateTicketPage() {
   const [departments, setDepartments] = useState([]);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
+      priority: 'medium',
       lat: '40.7128',
       lng: '-74.0060',
       location_text: 'Near incident / cross streets'
@@ -61,12 +62,15 @@ export function CreateTicketPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
             <label className="text-sm font-semibold text-text">Title</label>
-            <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('title', { required: 'Title is required', minLength: { value: 5, message: 'Minimum 5 characters' } })} />
+            <input
+              className="relative z-10 mt-2 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-text shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+              {...register('title', { required: 'Please enter a ticket title', minLength: { value: 5, message: 'Please enter at least 5 characters' } })}
+            />
             {errors.title ? <p className="mt-1 text-sm text-danger">{errors.title.message}</p> : null}
           </div>
           <div>
             <label className="text-sm font-semibold text-text">Priority</label>
-            <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('priority')}>
+            <select className="relative z-10 mt-2 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-text shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20" {...register('priority', { required: 'Priority is required' })}>
               {['low', 'medium', 'high', 'critical', 'emergency'].map(priority => (
                 <option key={priority} value={priority}>
                   {priority}
@@ -78,7 +82,7 @@ export function CreateTicketPage() {
 
         <div>
           <label className="text-sm font-semibold text-text">Department (optional)</label>
-          <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('department')}>
+          <select className="relative z-10 mt-2 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-text shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20" {...register('department')}>
             <option value="">Auto-route by AI</option>
             {departments.map(d => (
               <option key={d._id} value={d._id}>
@@ -91,21 +95,21 @@ export function CreateTicketPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="text-sm font-semibold text-text">Latitude</label>
-            <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('lat')} />
+            <input className="relative z-10 mt-2 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-text shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20" {...register('lat')} />
           </div>
           <div>
             <label className="text-sm font-semibold text-text">Longitude</label>
-            <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('lng')} />
+            <input className="relative z-10 mt-2 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-text shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20" {...register('lng')} />
           </div>
           <div className="sm:col-span-1">
             <label className="text-sm font-semibold text-text">Location label</label>
-            <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('location_text')} />
+            <input className="relative z-10 mt-2 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-text shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20" {...register('location_text')} />
           </div>
         </div>
 
         <div>
           <label className="text-sm font-semibold text-text">Description</label>
-          <textarea rows={7} className="mt-2 w-full rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('description', { required: 'Description is required', minLength: { value: 20, message: 'Please add more detail' } })} />
+          <textarea rows={7} className="relative z-10 mt-2 w-full rounded-3xl border-2 border-slate-200 bg-white px-4 py-3 text-text shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20" {...register('description', { required: 'Please enter a valid description', minLength: { value: 20, message: 'Please enter a valid description' } })} />
           {errors.description ? <p className="mt-1 text-sm text-danger">{errors.description.message}</p> : null}
         </div>
 
@@ -115,7 +119,7 @@ export function CreateTicketPage() {
             type="file"
             multiple
             accept=".jpg,.jpeg,.png,.pdf"
-            className="mt-3 block w-full text-sm text-muted file:mr-4 file:rounded-2xl file:border-0 file:bg-primary file:px-4 file:py-2 file:font-semibold file:text-white"
+            className="relative z-10 mt-3 block w-full text-sm text-muted file:mr-4 file:rounded-2xl file:border-0 file:bg-primary file:px-4 file:py-2 file:font-semibold file:text-white"
             {...register('attachments')}
             onChange={e => {
               const files = Array.from(e.target.files || []);

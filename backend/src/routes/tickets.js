@@ -19,7 +19,7 @@ router.patch('/:id/status', authenticateUser, authorizeRoles(['staff']), ticketC
 
 router.post('/:id/escalate', authenticateUser, authorizeRoles(['staff']), ticketController.escalateTicket);
 
-router.post('/:id/assign', authenticateUser, authorizeRoles(['admin']), ticketController.assignTicketToStaff);
+router.post('/:id/assign', authenticateUser, authorizeRoles(['staff']), ticketController.assignTicketToStaff);
 
 router.post('/:id/comments', authenticateUser, ticketController.addTicketComment);
 

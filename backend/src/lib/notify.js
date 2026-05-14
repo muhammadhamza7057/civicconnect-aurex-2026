@@ -11,7 +11,9 @@ async function notifyUser(userId, message, type = 'general', metadata = {}) {
     metadata
   });
   const io = getIO();
-  io && io.emit('notification:new', { user_id: userId.toString(), message, type, id: doc._id });
+  const payload = { user_id: userId.toString(), message, type, id: doc._id };
+  io && io.emit('notification:new', payload);
+  io && io.emit('notification_created', payload);
   return doc;
 }
 

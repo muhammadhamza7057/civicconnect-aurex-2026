@@ -17,11 +17,15 @@ const rawClient = axios.create({
 
 function normalizeError(error) {
   const response = error?.response?.data;
+  const details = response?.details || response?.errors || null;
+  const validationMessage = Array.isArray(details) && details.length
+    ? details.map(item => item?.msg || item?.message).filter(Boolean).join(', ')
+    : null;
   return {
-    message: response?.message || error.message || 'Something went wrong',
+    message: response?.message || validationMessage || error.message || 'Something went wrong',
     code: response?.code || response?.error?.code || 'request_failed',
     status: error?.response?.status || 500,
-    details: response?.details || response?.errors || null
+    details
   };
 }
 

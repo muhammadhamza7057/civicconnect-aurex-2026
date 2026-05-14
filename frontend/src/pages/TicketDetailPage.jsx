@@ -139,7 +139,7 @@ export function TicketDetailPage() {
           <div className="cc-card p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">Add comment</p>
             <form onSubmit={handleSubmit(onComment)} className="mt-4 space-y-3">
-              <textarea rows="5" placeholder="Write a public or internal update" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('body', { required: true })} />
+              <textarea rows="5" placeholder="Write a public or internal update" className="relative z-10 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-text outline-none" {...register('body', { required: true })} />
               <button disabled={isSubmitting} className="w-full rounded-2xl bg-primary px-4 py-3 font-semibold text-white shadow-glow disabled:opacity-50">{isSubmitting ? 'Sending...' : 'Add comment'}</button>
             </form>
           </div>

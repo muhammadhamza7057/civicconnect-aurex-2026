@@ -21,42 +21,40 @@ async function seed() {
     { upsert: true, new: true }
   );
 
-  const alice = await User.findOneAndUpdate(
-    { email: 'alice.resident@example.com' },
-    { name: 'Alice Resident', email: 'alice.resident@example.com', password: 'Password123!', role: 'resident' },
-    { upsert: true, new: true }
-  );
+  // Clear existing users so we can recreate them with proper password hashing
+  await User.deleteMany({ email: { $in: ['alice.resident@example.com', 'bob.staff@example.com', 'carol.deptadmin@example.com', 'dave.super@example.com'] } });
 
-  const bob = await User.findOneAndUpdate(
-    { email: 'bob.staff@example.com' },
-    {
-      name: 'Bob Staff',
-      email: 'bob.staff@example.com',
-      password: 'Password123!',
-      role: 'staff',
-      department: infra._id,
-      staff_id: 'STAFF-INF-001'
-    },
-    { upsert: true, new: true }
-  );
+  // Create users with proper password hashing via .save() method
+  const alice = await new User({
+    name: 'Alice Resident',
+    email: 'alice.resident@example.com',
+    password: 'Password123!',
+    role: 'resident'
+  }).save();
 
-  const carol = await User.findOneAndUpdate(
-    { email: 'carol.deptadmin@example.com' },
-    {
-      name: 'Carol Admin',
-      email: 'carol.deptadmin@example.com',
-      password: 'Password123!',
-      role: 'admin',
-      department: infra._id
-    },
-    { upsert: true, new: true }
-  );
+  const bob = await new User({
+    name: 'Bob Staff',
+    email: 'bob.staff@example.com',
+    password: 'Password123!',
+    role: 'staff',
+    department: infra._id,
+    staff_id: 'STAFF-INF-001'
+  }).save();
 
-  const dave = await User.findOneAndUpdate(
-    { email: 'dave.super@example.com' },
-    { name: 'Dave Super', email: 'dave.super@example.com', password: 'Password123!', role: 'super_admin' },
-    { upsert: true, new: true }
-  );
+  const carol = await new User({
+    name: 'Carol Admin',
+    email: 'carol.deptadmin@example.com',
+    password: 'Password123!',
+    role: 'admin',
+    department: infra._id
+  }).save();
+
+  const dave = await new User({
+    name: 'Dave Super',
+    email: 'dave.super@example.com',
+    password: 'Password123!',
+    role: 'super_admin'
+  }).save();
 
   await Department.findByIdAndUpdate(infra._id, { $set: { staff_ids: [bob._id] } });
 

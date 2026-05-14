@@ -77,11 +77,19 @@ export function AppShell({ children }) {
         toast(data.message, { icon: '🔔' });
       });
 
+      socket.on('announcement:emergency', (data) => {
+        toast.error(`Emergency alert: ${data.title || 'New city emergency'}`, {
+          duration: 8000,
+          id: `announcement-emergency-${data.id || data.title || 'global'}`
+        });
+      });
+
       return () => {
         socket.off('ticket:created');
         socket.off('ticket:statusChanged');
         socket.off('ticket:assigned');
         socket.off('notification:new');
+        socket.off('announcement:emergency');
       };
     }
   }, [profile]);

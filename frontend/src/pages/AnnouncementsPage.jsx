@@ -5,6 +5,7 @@ import { Megaphone, AlertTriangle } from 'lucide-react';
 import { client } from '../api/client';
 import { AnimatedPage } from '../components/AnimatedPage';
 import { SectionHeader } from '../components/SectionHeader';
+import { connectSocket } from '../socket/client';
 
 export function AnnouncementsPage() {
   const [items, setItems] = useState([]);
@@ -15,6 +16,31 @@ export function AnnouncementsPage() {
       .get('/announcements')
       .then(res => setItems(res.data?.data || []))
       .catch(err => toast.error(err.message || 'Failed to load'));
+  }, []);
+
+  useEffect(() => {
+    const socket = connectSocket();
+
+    const handleEmergency = (announcement) => {
+      setItems(current => {
+        const next = current.filter(item => item._id !== announcement.id);
+        return [{
+          _id: announcement.id,
+          title: announcement.title,
+          body: announcement.body,
+          is_emergency: true,
+          createdAt: announcement.createdAt
+        }, ...next];
+      });
+      setDismissedEmergency(false);
+      toast.error(`Emergency alert: ${announcement.title || 'New city emergency'}`, { duration: 8000 });
+    };
+
+    socket.on('announcement:emergency', handleEmergency);
+
+    return () => {
+      socket.off('announcement:emergency', handleEmergency);
+    };
   }, []);
 
   const emergency = !dismissedEmergency ? items.find(a => a.is_emergency) : null;

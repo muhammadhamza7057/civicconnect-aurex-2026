@@ -25,17 +25,17 @@ export function MetricCard({ label, value, icon = 'tickets', trend, accent = 'pr
   };
 
   return (
-    <motion.div whileHover={{ y: -4 }} className="cc-card p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-muted">{label}</p>
-          <div className="mt-3 text-4xl font-black tracking-tight text-text">
+    <motion.div whileHover={{ y: -4 }} className="cc-card p-4 sm:p-6">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm font-medium text-muted">{label}</p>
+          <div className="mt-2 sm:mt-3 text-3xl sm:text-4xl font-black tracking-tight text-text break-words">
             {isNumeric ? <CountUp end={numeric} duration={1.8} /> : value}
           </div>
-          {trend && <p className="mt-2 text-xs font-medium text-success">{trend}</p>}
+          {trend && <p className="mt-1 sm:mt-2 text-xs font-medium text-success">{trend}</p>}
         </div>
-        <div className={`rounded-2xl border border-border/50 bg-gradient-to-br p-3 ${accentMap[accent] || accentMap.primary}`}>
-          <Icon size={24} strokeWidth={1.5} />
+        <div className={`shrink-0 rounded-2xl border border-border/50 bg-gradient-to-br p-2 sm:p-3 ${accentMap[accent] || accentMap.primary}`}>
+          <Icon size={20} className="sm:w-6 sm:h-6" strokeWidth={1.5} />
         </div>
       </div>
     </motion.div>

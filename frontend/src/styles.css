@@ -58,6 +58,24 @@ body {
   box-sizing: border-box;
 }
 
+input,
+select,
+textarea,
+button {
+  pointer-events: auto;
+}
+
+input,
+select,
+textarea {
+  position: relative;
+  z-index: 1;
+}
+
+form {
+  position: relative;
+}
+
 ::selection {
   background: rgba(59, 130, 246, 0.3);
 }
